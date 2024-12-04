@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium Katman Kontrolleri</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.100/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.100/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        #cesiumContainer {
+            width: 100%;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: block;
+        }
+
+        #layerControls {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            z-index: 100;
+        }
+
+        #layerControls button {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f44336; /* Kırmızı renk, gizliyken */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #layerControls button.active {
+            background-color: #4CAF50; /* Yeşil renk, görünürken */
+        }
+
+        .slider {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        #clipMenu {
+            position: fixed;
+            right: 10px;
+            top: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            transform: translateY(-50%);
+            z-index: 200;
+            font-family: Arial, sans-serif;
+        }
+
+        #clipMenu button, #clipMenu select {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="cesiumContainer"></div>
+
+<div id="layerControls">
+    <button id="osmBuildingsButton" class="active">OSM Binaları</button>
+    <input type="range" id="osmBuildingsSlider" class="slider" min="0" max="1" step="0.01" value="1" />
+    
+    <button id="bingAerialWithLabelsButton">Bing Maps Aerial with Labels</button>
+    <input type="range" id="bingAerialWithLabelsSlider" class="slider" min="0" max="1" step="0.01" value="1" />
+    
+    <button id="bingAerialButton">Bing Maps Aerial</button>
+    <input type="range" id="bingAerialSlider" class="slider" min="0" max="1" step="0.01" value="1" />
+    
+    <button id="bingMapsRoadButton">Bing Maps Road</button>
+    <input type="range" id="bingMapsRoadSlider" class="slider" min="0" max="1" step="0.01" value="1" />
+    
+    <button id="bingMapsLabelsOnlyButton">Bing Maps Labels Only</button>
+    <input type="range" id="bingMapsLabelsOnlySlider" class="slider" min="0" max="1" step="0.01" value="1" />
+
+    <button id="asset2656561Button">Yeni Katman (2656561)</button>
+    <input type="range" id="asset2656561Slider" class="slider" min="0" max="1" step="0.01" value="1" />
+</div>
+
+<div id="clipMenu">
+    <button id="clipButton">Clip</button>
+    <select id="layerSelect"></select>
+    <button id="drawPolygonButton">Poligon Çiz</button>
+    <span>ya da</span>
+    <button id="clipByCampusButton">İTÜ Ayazağa Kampüsü Kısmi Kes</button>
+</div>
+
+<script>
+// Cesium Ion Token'ınızı buraya ekliyoruz
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw';
+
+// Cesium Viewer Oluşturulması
+const viewer = new Cesium.Viewer('cesiumContainer', {
+    baseLayerPicker: false,
+    terrainProvider: Cesium.createWorldTerrain()  // Dünya için varsayılan arazi
+});
+
+// İTÜ Ayazağa Kampüsü koordinatları
+const ituAyazaga = Cesium.Cartesian3.fromDegrees(29.0222, 41.105, 500);
+
+// "Home" butonunu İTÜ Ayazağa Kampüsü'ne zoom yapacak şekilde ayarlama
+viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
+    e.cancel = true; 
+    viewer.camera.flyTo({
+        destination: ituAyazaga,
+        orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-30),
+            roll: 0
+        }
+    });
+});
+
+// OSM Binaları Yükleme (Asset ID: 96188)
+const osmBuildings = viewer.scene.primitives.add(
+    new Cesium.Cesium3DTileset({
+        url: Cesium.IonResource.fromAssetId(96188)
+    })
+);
+
+// Bing Maps Katmanları (Asset ID'leri ile)
+const bingAerialWithLabelsLayer = viewer.imageryLayers.addImageryProvider(
+    new Cesium.IonImageryProvider({ assetId: 3 })
+);
+bingAerialWithLabelsLayer.show = false; // Başlangıçta gizli
+
+const bingAerialLayer = viewer.imageryLayers.addImageryProvider(
+    new Cesium.IonImageryProvider({ assetId: 2 })
+);
+bingAerialLayer.show = false; // Başlangıçta gizli
+
+const bingMapsRoadLayer = viewer.imageryLayers.addImageryProvider(
+    new Cesium.IonImageryProvider({ assetId: 4 })
+);
+bingMapsRoadLayer.show = false; // Başlangıçta gizli
+
+const bingMapsLabelsOnlyLayer = viewer.imageryLayers.addImageryProvider(
+    new Cesium.IonImageryProvider({ assetId: 2411391 })
+);
+bingMapsLabelsOnlyLayer.show = false; // Başlangıçta gizli
+
+// Yeni katman (Asset ID: 2656561)
+const newLayer = viewer.imageryLayers.addImageryProvider(
+    new Cesium.IonImageryProvider({ assetId: 2656561 })
+);
+newLayer.show = false; // Başlangıçta gizli
+
+// Katmanları aktif/pasif yapmak için buton kontrolleri
+function toggleLayer(layer, button) {
+    layer.show = !layer.show;
+    button.classList.toggle('active');
+}
+
+// OSM Binalarının görünürlüğünü kontrol eden buton
+document.getElementById('osmBuildingsButton').addEventListener('click', function() {
+    toggleLayer(osmBuildings, this);
+});
+
+// Bing Maps Aerial with Labels katmanını kontrol eden buton
+document.getElementById('bingAerialWithLabelsButton').addEventListener('click', function() {
+    toggleLayer(bingAerialWithLabelsLayer, this);
+});
+
+// Bing Maps Aerial katmanını kontrol eden buton
+document.getElementById('bingAerialButton').addEventListener('click', function() {
+    toggleLayer(bingAerialLayer, this);
+});
+
+// Bing Maps Road katmanını kontrol eden buton
+document.getElementById('bingMapsRoadButton').addEventListener('click', function() {
+    toggleLayer(bingMapsRoadLayer, this);
+});
+
+// Bing Maps Labels Only katmanını kontrol eden buton
+document.getElementById('bingMapsLabelsOnlyButton').addEventListener('click', function() {
+    toggleLayer(bingMapsLabelsOnlyLayer, this);
+});
+
+// Yeni katmanın kontrolü
+document.getElementById('asset2656561Button').addEventListener('click', function() {
+    toggleLayer(newLayer, this);
+});
+
+// Şeffaflık ayarlarını kontrol etme
+document.getElementById('osmBuildingsSlider').addEventListener('input', function() {
+    osmBuildings.style = new Cesium.Cesium3DTileStyle({
+        color: `color("white", ${this.value})`
+    });
+});
+
+document.getElementById('bingAerialWithLabelsSlider').addEventListener('input', function() {
+    bingAerialWithLabelsLayer.alpha = this.value;
+});
+
+document.getElementById('bingAerialSlider').addEventListener('input', function() {
+    bingAerialLayer.alpha = this.value;
+});
+
+document.getElementById('bingMapsRoadSlider').addEventListener('input', function() {
+    bingMapsRoadLayer.alpha = this.value;
+});
+
+document.getElementById('bingMapsLabelsOnlySlider').addEventListener('input', function() {
+    bingMapsLabelsOnlyLayer.alpha = this.value;
+});
+
+document.getElementById('asset2656561Slider').addEventListener('input', function() {
+    newLayer.alpha = this.value;
+});
+
+// Clip işlemi ve katman ekleme
+document.getElementById('clipButton').addEventListener('click', function() {
+    // Kullanıcıdan polygon çizmelerini isteyin ve kesme işlemini başlatın
+    alert("Katman kesme işlemi başladı.");
+});
+
+// Clipping için gerekli değişkenler
+let activeLayerForClipping;
+let clippingPolygon;
+
+// Katmanları select öğesine ekleyin
+const layerSelect = document.getElementById('layerSelect');
+layerSelect.innerHTML = `
+    <option value="osmBuildings">OSM Binaları</option>
+    <option value="bingAerialWithLabels">Bing Aerial with Labels</option>
+    <option value="bingAerial">Bing Aerial</option>
+    <option value="bingMapsRoad">Bing Maps Road</option>
+    <option value="bingMapsLabelsOnly">Bing Maps Labels Only</option>
+    <option value="newLayer">Yeni Katman (2656561)</option>
+`;
+
+// Seçili katmanı clip işlemi için ayarlayın
+layerSelect.addEventListener('change', function() {
+    const selectedLayer = this.value;
+
+    switch (selectedLayer) {
+        case 'osmBuildings':
+            activeLayerForClipping = osmBuildings;
+            break;
+        case 'bingAerialWithLabels':
+            activeLayerForClipping = bingAerialWithLabelsLayer;
+            break;
+        case 'bingAerial':
+            activeLayerForClipping = bingAerialLayer;
+            break;
+        case 'bingMapsRoad':
+            activeLayerForClipping = bingMapsRoadLayer;
+            break;
+        case 'bingMapsLabelsOnly':
+            activeLayerForClipping = bingMapsLabelsOnlyLayer;
+            break;
+        case 'newLayer':
+            activeLayerForClipping = newLayer;
+            break;
+        default:
+            activeLayerForClipping = null;
+    }
+});
+
+// Clip işlemi için poligon çizme
+document.getElementById('drawPolygonButton').addEventListener('click', function() {
+    viewer.entities.removeAll(); // Eski poligonları temizleyin
+    clippingPolygon = new Cesium.DrawHelper.PolygonPrimitive({
+        scene: viewer.scene,
+        material: Cesium.Color.RED.withAlpha(0.5)
+    });
+
+    viewer.scene.primitives.add(clippingPolygon);
+
+    // Clip işlemini başlatma
+    viewer.scene.primitives.add(new Cesium.ClippingPlaneCollection({
+        planes: Cesium.ClippingPlane.fromBoundingVolume(clippingPolygon.getGeometryInstanceAttributes().boundingVolume),
+        edgeColor: Cesium.Color.WHITE,
+        modelMatrix: activeLayerForClipping.modelMatrix
+    }));
+
+    alert("Clip işlemi tamamlandı.");
+});
+
+// İTÜ Ayazağa Kampüsü kısmını clip işlemi
+document.getElementById('clipByCampusButton').addEventListener('click', function() {
+    // Kampüs sınırları içindeki kısmı clip yapma
+    const campusBoundary = Cesium.Cartesian3.fromDegreesArray([ /* Kampüs sınır koordinatları */ ]);
+    const campusClippingPolygon = new Cesium.PolygonHierarchy(campusBoundary);
+
+    viewer.scene.primitives.add(new Cesium.ClippingPlaneCollection({
+        planes: Cesium.ClippingPlane.fromPolygonHierarchy(campusClippingPolygon),
+        edgeColor: Cesium.Color.WHITE,
+        modelMatrix: activeLayerForClipping.modelMatrix
+    }));
+
+    alert("İTÜ Ayazağa Kampüsü içindeki clip işlemi tamamlandı.");
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>İTÜ AKİM WebCBS</title>
+    <meta
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+      name="viewport"
+    />
+    <link
+      rel="icon"
+      href="../assets/img/logos/ituakimfavicon.png"
+      type="image/x-icon"
+    />
+
+    <!-- Fonts and icons -->
+    <script src="../assets/js/plugin/webfont/webfont.min.js"></script>
+    <script>
+      WebFont.load({
+        google: { families: ["Public Sans:300,400,500,600,700"] },
+        custom: {
+          families: [
+            "Font Awesome 5 Solid",
+            "Font Awesome 5 Regular",
+            "Font Awesome 5 Brands",
+            "simple-line-icons",
+          ],
+          urls: ["../assets/css/fonts.min.css"],
+        },
+        active: function () {
+          sessionStorage.fonts = true;
+        },
+      });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="../assets/css/kaiadmin.min.css" />
+
+    <!-- CSS Just for demo purpose, don't include it in your project -->
+    <link rel="stylesheet" href="../assets/css/demo.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- Sidebar -->
+      <div class="sidebar" data-background-color="white">
+        <div class="sidebar-logo">
+          <!-- Logo Header -->
+          <div class="logo-header" data-background-color="white">
+            <a href="../index.html" class="logo">
+              <img
+                src="../assets/img/logos/itu-akim-logo.jpg"
+                alt="navbar brand"
+                class="navbar-brand"
+                height="35"
+              />
+            </a>
+          </div>
+          <!-- End Logo Header -->
+        </div>
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+          <div class="sidebar-content">
+            <ul class="nav nav-secondary">
+              <li class="nav-item">
+                <a
+                   href="/index.html">
+                  <!-- data-bs-toggle="collapse" -->
+                  <!-- href="#dashboard" -->
+                  <!-- class="collapsed" -->
+                  <!-- aria-expanded="false" -->
+                <!-- > -->
+                  <i class="fas fa-home"></i>
+                  <p>Anasayfa</p>
+                  <!-- <span class="caret"></span> -->
+                </a>
+              <div class="collapse" id="dashboard">
+                <ul class="nav nav-collapse">
+                  <li>
+                    <!-- <a href="../demo1/index.html"> -->
+                      <!-- <span class="sub-item">Dashboard 1</span> -->
+                    <!-- </a> -->
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="nav-section">
+                <span class="sidebar-mini-icon">
+                  <i class="fa fa-ellipsis-h"></i>
+                </span>
+                <h4 class="text-section">Platform İçerİklerİ</h4>
+              </li>
+              <style>
+                .sub-item {
+                    display: block; /* Tüm öğeleri blok olarak hizalar */
+                    text-align: left; /* Metni sola hizalar */
+                    padding-left: 10px; /* Sol taraftan biraz boşluk bırakır */
+                }
+              
+                .nav-item .nav-collapse li {
+                    list-style: none; /* Liste işaretlerini kaldırır */
+                    margin-left: 0; /* Sol taraftan herhangi bir boşluk bırakmaz */
+                    padding-left: 10px; /* Sol boşluk ekler */
+                    text-align: left; /* Metinleri sola hizalar */
+                }
+              
+                .nav-collapse {
+                    padding-left: 0; /* Sol boşluğu sıfırlar */
+                    margin-left: 0; /* Soldan tüm margin'leri kaldırır */
+                    text-align: left; /* Tüm metni sola hizalar */
+                }
+              </style>
+              
+              <li class="nav-item active submenu">
+                <a data-bs-toggle="collapse" href="#base">
+                  <i class="fas fa-chart-bar"></i>
+                  <p>Analiz Araçlarımız</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse show" id="base">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="../components/viewshed.html">
+                        <span class="sub-item">Görünürlük (Viewshed) Analizi</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/lineofsight.html">
+                        <span class="sub-item">İki Nokta Arası Görünürlük (Line of Sight) Analizi</span>
+                      </a>
+                    </li>
+                    <li class="active">
+                      <a href="../components/buffer.html">
+                        <span class="sub-item">Tampon (Buffer) Analizi</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/overlay.html">
+                        <span class="sub-item">Çakışma (Overlay) Analizi</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/slope.html">
+                        <span class="sub-item">Eğim/Bakı (Slope/Aspect) Analizi</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/excavation.html">
+                        <span class="sub-item">Kazı/Dolgu (Excavation/Fill) Analizi</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/solar.html">
+                        <span class="sub-item">Güneş/Gölge (Solar/Shadow) Analizi</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/transport.html">
+                        <span class="sub-item">Ulaşım/Navigasyon (Network/Navigation) Analizi</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#tool">
+                  <i class="fas fa-cog"></i>
+                  <p>WebCBS Araçlarımız</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="tool">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="../components/coordinatetool.html">
+                        <span class="sub-item">Koordinat & Dönüşüm Araçları</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/basictools.html">
+                        <span class="sub-item">Alan, Mesafe ve Poligon Ölçü Araçları</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/anglemeasurer.html">
+                        <span class="sub-item">Açı Hesaplama Araçları</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/owndata.html">
+                        <span class="sub-item">Kendi Verinizi Ekleyin/Görüntüleyin</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../components/attributetable.html">
+                        <span class="sub-item">Varlık/Öznitelik (Entity/Attribute) Tablosu Oluşturma/Kaydetme</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#tables">
+                  <i class="fas fa-layer-group"></i>
+                  <p>Veri Katmanları</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="tables">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="../layers/ayazagadtm.html">
+                        <span class="sub-item">İTÜ Ayazağa DTM</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../layers/ayazagaortofoto.html">
+                        <span class="sub-item">İTÜ Ayazağa Ortofoto</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="../layers/ituassets.html">
+                        <span class="sub-item">İTÜ Ayazağa Obje Modelleri</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="nav-item">
+                <a href="../components/digitaltwin.html">
+                  <i class="fas fa-building"></i>
+                  <p>Entegre Dijital İkiz Örneği</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="../cesium/cesium.html">
+                  <i class="fas fa-globe"></i>
+                  <p>Cesium</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/forms.html">
+                  <i class="fas fa-pen-square"></i>
+                  <p>Bize Ulaşın</p>
+                </a>
+              </li>
+          </div>
+        </div>
+      </div>
+      <!-- End Sidebar -->
+
+      <div class="main-panel">
+        <div class="main-header">
+          <div class="main-header-logo">
+            <!-- Logo Header -->
+            <div class="logo-header" data-background-color="dark">
+              <a href="../index.html" class="logo">
+                <img
+                  src="../assets/img/kaiadmin/logo_light.svg"
+                  alt="navbar brand"
+                  class="navbar-brand"
+                  height="20"
+                />
+              </a>
+              <div class="nav-toggle">
+                <button class="btn btn-toggle toggle-sidebar">
+                  <i class="gg-menu-right"></i>
+                </button>
+                <button class="btn btn-toggle sidenav-toggler">
+                  <i class="gg-menu-left"></i>
+                </button>
+              </div>
+              <button class="topbar-toggler more">
+                <i class="gg-more-vertical-alt"></i>
+              </button>
+            </div>
+            <!-- End Logo Header -->
+          </div>
+          <!-- Navbar Header -->
+           
+          <nav>
+             <div class="container-fluid">
+              <nav class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex">
+                <ul class="navbar-nav w-100 d-flex align-items-center justify-content-between">
+                  <li class="nav-item d-flex align-items-center" style="margin-left: 10px; margin-top: 13px;">
+                        <a href="mailto:bilgi@uakim.itu.edu.tr">bilgi@uakim.itu.edu.tr</a>
+                    </li>
+                    <li class="nav-item d-flex align-items-center" style="margin-right: 10px; margin-top: 13px;">
+                        <a> © İTÜ Geomatik Mühendisliği, 2024</a>
+                      </li>
+                    </ul>
+                </nav>
+            </div>
+          </nav>
+
+          <style>
+            .navbar-nav {
+                height: 100%;
+            }
+            .nav-item {
+                display: flex;
+                align-items: center;
+            }
+            .nav-item a {
+                display: inline-block;
+                text-align: center;
+                padding: 0.5rem;
+            }
+            .navbar {
+                display: flex;
+                align-items: center;
+                height: 100%; /* Dikey ortalama */
+            }
+        </style>
+
+          <!-- End Navbar -->
+        </div>
+
+        <div class="container">
+          <div class="page-inner">
+            <div class="row">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="card card-round">
+                    <div class="card-header">
+                      <div class="card-head-row card-tools-still-right">
+                        <h4 class="card-title">Tampon Analizi (Buffer Analysis)</h4>
+                        <div class="card-tools">
+                          <!-- <button -->
+                            <!-- class="btn btn-icon btn-link btn-primary btn-xs" -->
+                          <!-- > -->
+                            <!-- <span class="fa fa-angle-down"></span> -->
+                          <!-- </button> -->
+                          <!-- <button -->
+                            <!-- class="btn btn-icon btn-link btn-primary btn-xs btn-refresh-card" -->
+                          <!-- > -->
+                            <!-- <span class="fa fa-sync-alt"></span> -->
+                          <!-- </button> -->
+                          <!-- <button -->
+                            <!-- class="btn btn-icon btn-link btn-primary btn-xs" -->
+                          <!-- > -->
+                            <!-- <span class="fa fa-times"></span> -->
+                          <!-- </button> -->
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-12">
+                          <div class="embed-container">
+                            <iframe
+                              src="../cesium/cesiummultibuffer.html"
+                              style="width: 100%; height: 600px; border: none;"
+                            ></iframe>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <style>
+                      .embed-container {
+                        width: 100%;
+                        height: 100%;
+                        border: 1px solid #ccc;
+                        background-color: #f9f9f9;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      }
+                    </style>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="card card-round">
+                    <div class="card-header">
+                      <div class="card-head-row card-tools-still-right">
+                        <h3 class="card-title">Tampon Analizi Nedir?</h3>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div class="content">
+                        <div class="column">
+                          <p class="card-category">
+                            Tampon analizi (Buffer Analysis), Coğrafi Bilgi Sistemleri (CBS) uygulamalarında yaygın olarak kullanılan, mekânsal verilerle ilgili birçok kritik soruya yanıt verebilen bir analiz yöntemidir. Bu analiz türü, belirli bir nokta, çizgi veya çokgen etrafında sabit bir mesafe oluşturarak bu nesnenin etrafında "tampon" adı verilen bölgeleri tanımlar. Tampon bölgeleri, CBS'de mekânsal ilişkileri ve etkileri analiz etmek için vazgeçilmezdir.
+                          </p>
+                          <p class="card-category">
+                            Tampon analizinin temel amacı, belirli bir nesnenin etrafında belirli bir mesafe içinde yer alan alanları belirlemektir. Örneğin, bir su kaynağının etrafındaki 100 metre yarıçapındaki alanı analiz ederek bu alanda bulunan yapılaşmaları veya bitki örtüsünü incelemek mümkündür. Bu tür analizler, çevresel etki değerlendirmelerinden, altyapı planlamasına kadar geniş bir yelpazede uygulanabilir.
+                          </p>
+                          <br>
+                          <ul>
+                            <li>Çevresel Etki Değerlendirmesi (ÇED): Sanayi tesisleri ve büyük inşaat projelerinin çevresel etkilerini değerlendirmek için tampon bölgeleri oluşturulur.</li>
+                            <li>Acil Durum ve Afet Yönetimi: Deprem, sel veya yangın gibi doğal afet risklerini belirlemek ve önlem almak için tampon analizleri kullanılır.</li>
+                            <li>Altyapı ve Kentsel Planlama: Yollar ve enerji hatları gibi altyapı projelerinin çevresel ve sosyo-ekonomik etkilerini değerlendirmek için kullanılır.</li>
+                            <li>Doğal Kaynak Yönetimi: Ormanlar ve su kaynaklarının korunması ve yönetimi için tampon analizleri yapılır.</li>
+                            <li>Halk Sağlığı: Sağlık tesislerinin erişilebilirliğini ve hizmet alanlarını belirlemek için tampon analizleri kullanılır.</li>
+                          </ul>
+                          <p class="card-category">
+                            Tampon analizi örneğimizin kaynak koduna <a href="https://sandcastle.cesium.com/#c=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" target="_blank" >buradan</a> ulaşabilirsiniz.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              
+            
+            <style>
+              .card-body {
+                padding: 20px;
+              }
+            
+              .content {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+              }
+            
+              .left-column {
+                width: 55%;
+                padding-left: 0px; /* Sol hizalama ayarı */
+              }
+            
+              .right-column {
+                width: 40%;
+                padding-left: 20px; /* Görsel için sol hizalama */
+              }
+            
+              .embed-container {
+                width: 100%;
+                height: 100%;
+                border: 1px solid #ccc;
+                background-color: #f9f9f9;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+            
+              .embed-container img {
+                max-width: 100%;
+                height: auto;
+              }
+            
+              .section-title {
+                font-size: 1.3em; /* Başlık büyüklüğü ayarlandı */
+                margin-bottom: 10px;
+                color: inherit; /* Başlık rengi uyumu için */
+                text-align: left; /* Sola hizalama */
+              }
+            
+              .card-category {
+                padding: 10px;
+                margin: 0;
+                text-align: left; /* Sola hizalama */
+                color: #333; /* Metin rengini koyulaştırmak için */
+                padding-left: 0px; /* Metin sola hizalama */
+              }
+            </style>
+            
+            
+            </div>
+
+
+            
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="container-fluid d-flex justify-content-between">
+            <nav class="pull-left">
+              <ul class="nav">
+                <li class="nav-item">
+                  <a class="nav-link" target="_blank" href="https://geomatik.itu.edu.tr/">
+                    İTÜ Geomatik Mühendisliği
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" target="_blank" href="https://uakim.itu.edu.tr/"> İTÜ AKİM </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" target="_blank" href="https://www.google.com/maps/dir//Re%C5%9Fitpa%C5%9Fa,+%C4%B0T%C3%9C+Geomatik+M%C3%BChendisli%C4%9Fi+B%C3%B6l%C3%BCm%C3%BC,+Sar%C4%B1yer+Cd.,+34469+Sar%C4%B1yer%2F%C4%B0stanbul/@41.1046344,29.0184864,18.75z/data=!4m17!1m7!3m6!1s0x14cab5c33bdda89f:0xbbfb5ddcbc1981a6!2zxLBUw5wgR2VvbWF0aWsgTcO8aGVuZGlzbGnEn2kgQsO2bMO8bcO8!8m2!3d41.104487!4d29.018748!16s%2Fg%2F11ckgldqyj!4m8!1m0!1m5!1m1!1s0x14cab5c33bdda89f:0xbbfb5ddcbc1981a6!2m2!1d29.018748!2d41.104487!3e2?entry=ttu"> Yol Tarifi Al </a>
+                </li>
+              </ul>
+            </nav>
+            <div class="copyright">
+              <a target="_blank" href="https://gis.itu.edu.tr/">İTÜ Ulusal Coğrafi Bilgi Teknolojileri İnovasyon Uygulama-Araştırma Merkezi (UCBTiM) </a>
+            </div>
+            <div>
+              <a target="_blank" href="https://www.akillisehirler.gov.tr/">Akıllı Şehirler Portalı</a>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+    <!--   Core JS Files   -->
+    <script src="../assets/js/core/jquery-3.7.1.min.js"></script>
+    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/bootstrap.min.js"></script>
+
+    <!-- jQuery Scrollbar -->
+    <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+    <!-- Moment JS -->
+    <script src="../assets/js/plugin/moment/moment.min.js"></script>
+
+    <!-- Chart JS -->
+    <script src="../assets/js/plugin/chart.js/chart.min.js"></script>
+
+    <!-- jQuery Sparkline -->
+    <script src="../assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+
+    <!-- Chart Circle -->
+    <script src="../assets/js/plugin/chart-circle/circles.min.js"></script>
+
+    <!-- Datatables -->
+    <script src="../assets/js/plugin/datatables/datatables.min.js"></script>
+
+    <!-- Bootstrap Notify -->
+    <script src="../assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+
+    <!-- jQuery Vector Maps -->
+    <script src="../assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
+    <script src="../assets/js/plugin/jsvectormap/world.js"></script>
+
+    <!-- Sweet Alert -->
+    <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+
+    <!-- Kaiadmin JS -->
+    <script src="../assets/js/kaiadmin.min.js"></script>
+
+    <!-- Kaiadmin DEMO methods, don't include it in your project! -->
+    <script src="../assets/js/setting-demo2.js"></script>
+  </body>
+</html>

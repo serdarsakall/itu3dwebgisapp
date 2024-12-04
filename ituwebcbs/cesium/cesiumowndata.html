@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .button-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .button-container button {
+      margin: 5px 0;
+      background-color: #444;
+      color: white;
+      border: 1px solid #555;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 5px;
+      width: 200px;
+    }
+
+    #coordinatesBar {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+      display: flex; /* Flexbox ile yatay hizalama */
+      align-items: center; /* Dikey hizalamayı ortala */
+    }
+
+    #coordinateMode {
+      margin-right: 10px; /* Seçenek menüsü ile koordinat değeri arasındaki boşluk */
+    }
+
+    #coordinateValues {
+      margin: 0; /* Koordinat değeri için sıfır marj */
+    }
+
+    #titleBar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 15px;
+      font-family: sans-serif;
+    }
+
+    /* Modal pencere tasarımı */
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 20; 
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); 
+    }
+
+    .modal-content {
+      background-color: #444;
+      color: white;
+      border: 1px solid #555;
+      margin: 15% auto;
+      padding: 20px;
+      width: 400px;
+      position: relative;
+    }
+
+    .close {
+      color: white;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    #layersTable {
+      position: absolute;
+      bottom: 60px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      width: 80%;
+      max-width: 500px;
+    }
+
+    #layersTable table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #layersTable th, #layersTable td {
+      border: 1px solid white;
+      padding: 5px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="titleBar">Kendi Verinizi Cesium'da Görüntüleyin</div>
+  
+  <div class="button-container">
+    <button id="zoomToITU">Zoom to İTÜ Ayazağa Campus</button>
+    <button id="createTileset">Add New Tileset</button>
+    <button id="createTerrain">Add New Terrain</button>
+    <button id="createImagery">Add New Imagery</button>
+  </div>  
+  
+  <div id="coordinatesBar">
+    <select id="coordinateMode">
+      <option value="geographic">Geographic</option>
+      <option value="cartesian">Cartesian</option>
+    </select>
+    <div id="coordinateValues"></div>
+  </div>
+
+  <!-- Modal for Tileset -->
+  <div id="modalTileset" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Add New Tileset</h3>
+      
+      <label for="layerNameTileset">Layer Name:</label>
+      <input type="text" id="layerNameTileset" style="width: 100%; margin-bottom: 10px;">
+
+      <label for="fileUploadTileset">File Upload:</label>
+      <input type="file" id="fileUploadTileset" accept=".czml, .json, .geojson, .topojson, .kml, .kmz" style="width: 100%;" />
+      <p id="fileNameTileset"></p>
+
+      <button id="addTilesetBtn" style="margin-top: 10px;">Add New Tileset</button>
+      <span id="tilesetMessage"></span>
+    </div>
+  </div>
+
+  <!-- Modal for Terrain -->
+  <div id="modalTerrain" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Add New Terrain</h3>
+      
+      <label for="layerNameTerrain">Layer Name:</label>
+      <input type="text" id="layerNameTerrain" style="width: 100%; margin-bottom: 10px;">
+
+      <label for="fileUploadTerrain">File Upload:</label>
+      <input type="file" id="fileUploadTerrain" accept=".flt, .asc, .src, .tiff, .tif, .img, .dem" style="width: 100%;" />
+      <p id="fileNameTerrain"></p>
+
+      <button id="addTerrainBtn" style="margin-top: 10px;">Add New Terrain</button>
+      <span id="terrainMessage"></span>
+    </div>
+  </div>
+
+  <!-- Modal for Imagery -->
+  <div id="modalImagery" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Add New Imagery</h3>
+      
+      <label for="layerNameImagery">Layer Name:</label>
+      <input type="text" id="layerNameImagery" style="width: 100%; margin-bottom: 10px;">
+
+      <label for="fileUploadImagery">File Upload:</label>
+      <input type="file" id="fileUploadImagery" accept=".flt, .asc, .src, .tiff, .tif, .img, .dem, .jpg, .jpeg, .png" style="width: 100%;" />
+      <p id="fileNameImagery"></p>
+
+      <button id="addImageryBtn" style="margin-top: 10px;">Add New Imagery</button>
+      <span id="imageryMessage"></span>
+    </div>
+  </div>
+
+  <!-- Layers table -->
+  <div id="layersTable">
+    <table>
+      <thead>
+        <tr>
+          <th>Layer Name</th>
+          <th>Data Format</th>
+          <th>Import Time</th>
+          <th>Creation Time</th>
+        </tr>
+      </thead>
+      <tbody id="layersTableBody">
+        <!-- Populated dynamically -->
+      </tbody>
+    </table>
+  </div>
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+    (async () => {
+        try {
+            const viewer = new Cesium.Viewer("cesiumContainer", {
+                terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+            });
+
+            viewer.scene.globe.depthTestAgainstTerrain = true;
+
+            const imageryLayer = viewer.imageryLayers.addImageryProvider(
+                await Cesium.IonImageryProvider.fromAssetId(2656561),
+            );
+
+            const tilesets = [
+          2654260, 2654259, 2654257, 2654256, 2654255, 2654253, 2654252, 2654251,
+          2654250, 2654249, 2654248, 2654246, 2654243, 2654241, 2654239, 2658263,
+          2658261, 2658258, 2658247, 2658239, 2658220, 2658205, 2658186, 2658080,
+          2658066, 2658057, 2657980, 2657979, 2657947, 2657944, 2657943, 2657806,
+          2657804, 2657802, 2657801, 2657799, 2657795, 2657793, 2657789, 2657788,
+          2657787, 2654283, 2654282, 2654281, 2654280, 2654279, 2654277, 2654276,
+          2654275, 2654274, 2654273, 2654271, 2654270, 2654269, 2654268, 2654267,
+          2654266, 2654265, 2654264, 2654262, 2654261,
+        ];
+
+        const tilesetPrimitives = await Promise.all(tilesets.map(async (assetId) => {
+          const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+          viewer.scene.primitives.add(tileset);
+          return tileset;
+        }));
+
+        tilesetPrimitives.forEach(tileset => {
+          const extras = tileset.asset.extras;
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.defaultStyle)) {
+            tileset.style = new Cesium.Cesium3DTileStyle(extras.ion.defaultStyle);
+          }
+
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.georeferencedBoundingBox)) {
+            const bbox = extras.ion.georeferencedBoundingBox;
+            const center = Cesium.BoundingSphere.fromCornerPoints(
+              Cesium.Cartesian3.fromDegrees(bbox.west, bbox.south),
+              Cesium.Cartesian3.fromDegrees(bbox.east, bbox.north)
+            ).center;
+            tileset.readyPromise.then(() => {
+              viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0, -0.5, center.z * 2.0));
+            });
+          }
+        });
+
+        // Zoom to ITU function
+        document.getElementById('zoomToITU').addEventListener('click', () => {
+          const ituBoundingSphere = new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(29.0224, 41.1055), 1000);
+          viewer.camera.flyToBoundingSphere(ituBoundingSphere);
+        });
+
+        function updateGeographicCoordinates(cartographic) {
+    const lonDegrees = Cesium.Math.toDegrees(cartographic.longitude);
+    const latDegrees = Cesium.Math.toDegrees(cartographic.latitude);
+    
+    const lon = Math.abs(lonDegrees).toFixed(6);
+    const lat = Math.abs(latDegrees).toFixed(6);
+    
+    const lonDirection = lonDegrees >= 0 ? 'E' : 'W';
+    const latDirection = latDegrees >= 0 ? 'N' : 'S';
+    
+    const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+
+    return `Lon: ${lon}° ${lonDirection}, Lat: ${lat}° ${latDirection}, Height: ${height}m`;
+}
+
+// Coordinate bar update function for Cartesian mode
+function updateCartesianCoordinates(cartographic) {
+    const cartesian = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height);
+    const x = cartesian.x.toFixed(4);
+    const y = cartesian.y.toFixed(4);
+    const z = cartesian.z.toFixed(4);
+    return `X: ${x} m, Y: ${y} m, Z: ${z} m`;
+}
+
+// Main function to update coordinates bar based on selected mode
+function updateCoordinatesBar(cartographic, mode) {
+    let coordinatesText;
+    if (mode === 'geographic') {
+        coordinatesText = updateGeographicCoordinates(cartographic);
+    } else if (mode === 'cartesian') {
+        coordinatesText = updateCartesianCoordinates(cartographic);
+    }
+    document.getElementById('coordinateValues').innerText = coordinatesText;
+}
+
+// Mouse move event listener for coordinates bar
+const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction((movement) => {
+    const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        const mode = document.getElementById('coordinateMode').value;
+        updateCoordinatesBar(cartographic, mode);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+    }
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+// Dropdown change event listener to update coordinates based on selected mode
+document.getElementById('coordinateMode').addEventListener('change', (event) => {
+    const cartesian = viewer.camera.pickEllipsoid(handler._lastMovement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        updateCoordinatesBar(cartographic, event.target.value);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+    }
+});
+
+        // Modal management
+        const modalTileset = document.getElementById('modalTileset');
+        const modalTerrain = document.getElementById('modalTerrain');
+        const modalImagery = document.getElementById('modalImagery');
+
+        // Get close buttons
+        const closeButtons = document.querySelectorAll('.close');
+
+        // Function to open a modal
+        function openModal(modal) {
+            modal.style.display = "block";
+        }
+
+        // Function to close any modal
+        function closeModal(modal) {
+            modal.style.display = "none";
+        }
+
+        // Add event listeners for opening the modals
+        document.getElementById('createTileset').addEventListener('click', () => openModal(modalTileset));
+        document.getElementById('createTerrain').addEventListener('click', () => openModal(modalTerrain));
+        document.getElementById('createImagery').addEventListener('click', () => openModal(modalImagery));
+
+        // Add event listeners for closing modals
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                closeModal(button.parentElement.parentElement);
+            });
+        });
+
+        // Close modal when clicking outside of modal content
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target);
+            }
+        });
+
+        // Function to handle adding new tileset
+        document.getElementById('addTilesetBtn').addEventListener('click', () => {
+            const layerName = document.getElementById('layerNameTileset').value;
+            const fileInput = document.getElementById('fileUploadTileset').files[0];
+            const messageElement = document.getElementById('tilesetMessage');
+
+            if (layerName && fileInput) {
+                messageElement.textContent = "Tileset imported successfully.";
+                messageElement.style.color = "green";
+                addLayerToTable(layerName, fileInput.name, "Tileset");
+                closeModal(modalTileset);
+            } else {
+                messageElement.textContent = "Tileset could not be imported.";
+                messageElement.style.color = "red";
+            }
+        });
+
+        // Function to handle adding new terrain
+        document.getElementById('addTerrainBtn').addEventListener('click', () => {
+            const layerName = document.getElementById('layerNameTerrain').value;
+            const fileInput = document.getElementById('fileUploadTerrain').files[0];
+            const messageElement = document.getElementById('terrainMessage');
+
+            if (layerName && fileInput) {
+                messageElement.textContent = "Terrain imported successfully.";
+                messageElement.style.color = "green";
+                addLayerToTable(layerName, fileInput.name, "Terrain");
+                closeModal(modalTerrain);
+            } else {
+                messageElement.textContent = "Terrain could not be imported.";
+                messageElement.style.color = "red";
+            }
+        });
+
+        // Function to handle adding new imagery
+        document.getElementById('addImageryBtn').addEventListener('click', () => {
+            const layerName = document.getElementById('layerNameImagery').value;
+            const fileInput = document.getElementById('fileUploadImagery').files[0];
+            const messageElement = document.getElementById('imageryMessage');
+
+            if (layerName && fileInput) {
+                messageElement.textContent = "Imagery imported successfully.";
+                messageElement.style.color = "green";
+                addLayerToTable(layerName, fileInput.name, "Imagery");
+                closeModal(modalImagery);
+            } else {
+                messageElement.textContent = "Imagery could not be imported.";
+                messageElement.style.color = "red";
+            }
+        });
+
+        // Function to add the layer to the layers table
+        function addLayerToTable(layerName, fileName, dataType) {
+            const tableBody = document.getElementById('layersTableBody');
+            const row = document.createElement('tr');
+
+            const importTime = new Date().toLocaleTimeString();
+            const creationTime = new Date().toLocaleTimeString();
+
+            row.innerHTML = `
+                <td>${layerName}</td>
+                <td>${fileName}</td>
+                <td>${importTime}</td>
+                <td>${creationTime}</td>
+            `;
+
+            tableBody.appendChild(row);
+        }
+      } catch (error) {
+        console.error('An error occurred:', error);
+      }
+    })();
+  </script>
+</body>
+</html>

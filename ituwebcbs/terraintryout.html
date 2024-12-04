@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium Toggle Terrain Visibility</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        html, body, #cesiumContainer {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #terrainToggleBtn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 9999; /* Buton her zaman üstte olacak */
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #terrainToggleBtn:active {
+            background-color: #005fa3;
+        }
+        #coordinatesBar {
+      position: absolute;
+      bottom: 5px;
+      right: 110px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    #coordinateMode {
+      margin-right: 10px;
+    }
+
+    #coordinateValues {
+      margin: 0;
+    }
+
+    .cesium-viewer-toolbar {
+      right: 40px !important;
+    }
+
+    .cesium-viewer-fullscreenContainer {
+      top: 7.5px;
+      right: 7.5px;
+      z-index: 100;
+      margin: 0 !important;
+      background-color: rgba(42, 42, 42, 0.8); /* Fullscreen button style */
+      border: none;
+      height: 31.5px; /* coordinatesBar ile aynı yükseklikte */
+    }
+
+    </style>
+</head>
+  <div id="coordinatesBar">
+    <select id="coordinateMode">
+      <option value="geographic">Coğrafi</option>
+      <option value="cartesian">Kartezyen</option>
+    </select>
+    <div id="coordinateValues"></div>
+  </div>
+<body>
+
+<button id="terrainToggleBtn">Toggle Terrain</button>
+<div id="cesiumContainer"></div>
+
+<script>
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+    (async () => {
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+            timeline: false,
+            baseLayerPicker: false,
+            terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+        });
+
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+
+        let bingMapsAerialLayer = viewer.imageryLayers.addImageryProvider(
+            await Cesium.IonImageryProvider.fromAssetId(2)
+        );
+
+        let ortofotoLayer = viewer.imageryLayers.addImageryProvider(
+            await Cesium.IonImageryProvider.fromAssetId(2656561)
+        );
+
+        const terrainOffset = -45;
+
+        const tilesets = [
+            2654260, 2654259, 2654257, 2654256, 2654255, 2654253, 2654252, 2654251,
+            2654250, 2654249, 2654248, 2654246, 2654243, 2654241, 2654239, 2658263,
+            2658261, 2658258, 2658247, 2658239, 2658220, 2658205, 2658186, 2658080,
+            2658066, 2658057, 2657980, 2657979, 2657947, 2657944, 2657943, 2657806,
+            2657804, 2657802, 2657801, 2657799, 2657795, 2657793, 2657789, 2657788,
+            2657787, 2654283, 2654282, 2654281, 2654280, 2654279, 2654277, 2654276,
+            2654275, 2654274, 2654273, 2654271, 2654270, 2654269, 2654268, 2654267,
+            2654266, 2654265, 2654264, 2654262, 2654261,
+        ];
+
+        const tilesetPrimitives = await Promise.all(tilesets.map(async (assetId) => {
+            const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+            await tileset.readyPromise;
+            viewer.scene.primitives.add(tileset);
+            return tileset;
+        }));
+
+        // Kendi terrain katmanınızı elde edin
+        const customTerrainProvider = await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560); // Sizin özel terrain katmanınız
+
+        // Kendi terrain katmanınızı görünür yapmak için imageryLayer oluşturun
+        const customTerrainLayer = viewer.scene.imageryLayers.addImageryProvider(customTerrainProvider);
+
+        // Buton işlevi
+        document.getElementById("terrainToggleBtn").addEventListener("click", () => {
+            // Eğer terrain katmanı görünürse, gizle
+            if (customTerrainLayer.show) {
+                customTerrainLayer.show = false;
+                console.log("Custom Terrain disabled");
+            } else {
+                // Eğer terrain katmanı gizli ise, tekrar görünür yap
+                customTerrainLayer.show = true;
+                console.log("Custom Terrain enabled");
+            }
+        });
+
+
+             // Override the default Home button behavior
+      viewer.homeButton.viewModel.command.beforeExecute.addEventListener((event) => {
+        event.cancel = true;
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(29.0215, 41.1050, 3000),
+        });
+      });
+
+      viewer.camera.setView({
+  destination: Cesium.Cartesian3.fromDegrees(29.0215, 41.1050, 3000),
+});
+      viewer.scene.completeMorph();  // Varsayılan geçişi engeller ve anında yeni görünümü ayarlar
+
+
+      function updateGeographicCoordinates(cartographic) {
+    const lonDegrees = Cesium.Math.toDegrees(cartographic.longitude);
+    const latDegrees = Cesium.Math.toDegrees(cartographic.latitude);
+    
+    const lon = Math.abs(lonDegrees).toFixed(7);
+    const lat = Math.abs(latDegrees).toFixed(7);
+    
+    const lonDirection = lonDegrees >= 0 ? 'D' : 'B';
+    const latDirection = latDegrees >= 0 ? 'K' : 'G';
+    
+    const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+
+    return `Enlem ${lat}° ${latDirection}, Boylam: ${lon}° ${lonDirection}, Yükseklik: ${height}m`;
+}
+
+// Coordinate bar update function for Cartesian mode
+function updateCartesianCoordinates(cartographic) {
+    const cartesian = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height);
+    const x = cartesian.x.toFixed(4);
+    const y = cartesian.y.toFixed(4);
+    const z = cartesian.z.toFixed(4);
+    return `X: ${x} m, Y: ${y} m, Z: ${z} m`;
+}
+
+// Main function to update coordinates bar based on selected mode
+function updateCoordinatesBar(cartographic, mode) {
+    let coordinatesText;
+    if (mode === 'geographic') {
+        coordinatesText = updateGeographicCoordinates(cartographic);
+    } else if (mode === 'cartesian') {
+        coordinatesText = updateCartesianCoordinates(cartographic);
+    }
+    document.getElementById('coordinateValues').innerText = coordinatesText;
+}
+
+// Mouse move event listener for coordinates bar
+const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction((movement) => {
+    const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        const mode = document.getElementById('coordinateMode').value;
+        updateCoordinatesBar(cartographic, mode);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Dünya üzerindeki herhangi bir noktada olduğunuzdan emin olun.";
+    }
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+// Dropdown change event listener to update coordinates based on selected mode
+document.getElementById('coordinateMode').addEventListener('change', (event) => {
+    const cartesian = viewer.camera.pickEllipsoid(handler._lastMovement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        updateCoordinatesBar(cartographic, event.target.value);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Dünya üzerindeki herhangi bir noktada olduğunuzdan emin olun.";
+    }
+});
+    })();
+</script>
+
+</body>
+</html>

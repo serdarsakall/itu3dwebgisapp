@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #toolbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #toolbar button {
+      color: white;
+      background-color: #444;
+      border: 1px solid #555;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    #coordinatesBar {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    z-index: 10;
+    background-color: rgba(42, 42, 42, 0.8);
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    display: flex; /* Flexbox ile yatay hizalama */
+    align-items: center; /* Dikey hizalamayı ortala */
+}
+
+#coordinateMode {
+    margin-right: 10px; /* Seçenek menüsü ile koordinat değeri arasındaki boşluk */
+}
+
+#coordinateValues {
+    margin: 0; /* Koordinat değeri için sıfır marj */
+}
+    #titleBar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 24px;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="titleBar">Açı Hesaplama Araçları</div>
+  <div id="toolbar">
+    <button id="zoomToITU">Zoom to İTÜ Ayazağa Campus</button>
+    <button id="angleCalculator">Angle Calculator</button>
+  </div>
+  <div id="coordinatesBar">
+    <select id="coordinateMode">
+        <option value="geographic">Geographic</option>
+        <option value="cartesian">Cartesian</option>
+    </select>
+    <div id="coordinateValues"></div>
+
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+(async () => {
+    try {
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+            terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+        });
+
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+
+        const imageryLayer = viewer.imageryLayers.addImageryProvider(
+            await Cesium.IonImageryProvider.fromAssetId(2656561),
+        );
+
+        const tilesets = [
+      2654260, 2654259, 2654257, 2654256, 2654255, 2654253, 2654252, 2654251,
+      2654250, 2654249, 2654248, 2654246, 2654243, 2654241, 2654239, 2658263,
+      2658261, 2658258, 2658247, 2658239, 2658220, 2658205, 2658186, 2658080,
+      2658066, 2658057, 2657980, 2657979, 2657947, 2657944, 2657943, 2657806,
+      2657804, 2657802, 2657801, 2657799, 2657795, 2657793, 2657789, 2657788,
+      2657787, 2654283, 2654282, 2654281, 2654280, 2654279, 2654277, 2654276,
+      2654275, 2654274, 2654273, 2654271, 2654270, 2654269, 2654268, 2654267,
+      2654266, 2654265, 2654264, 2654262, 2654261,
+    ];
+
+    const tilesetPrimitives = await Promise.all(tilesets.map(async (assetId) => {
+      const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+      viewer.scene.primitives.add(tileset);
+      return tileset;
+    }));
+
+    tilesetPrimitives.forEach(tileset => {
+      const extras = tileset.asset.extras;
+      if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.defaultStyle)) {
+        tileset.style = new Cesium.Cesium3DTileStyle(extras.ion.defaultStyle);
+      }
+
+      if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.georeferencedBoundingBox)) {
+        const bbox = extras.ion.georeferencedBoundingBox;
+        const center = Cesium.BoundingSphere.fromCornerPoints(
+          Cesium.Cartesian3.fromDegrees(bbox.west, bbox.south),
+          Cesium.Cartesian3.fromDegrees(bbox.east, bbox.north)
+        ).center;
+        tileset.readyPromise.then(() => {
+          viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0, -0.5, center.z * 2.0));
+        });
+      }
+    });
+
+    // Zoom to ITU function
+    document.getElementById('zoomToITU').addEventListener('click', () => {
+      const ituBoundingSphere = new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(29.0224, 41.1055), 1000);
+      viewer.camera.flyToBoundingSphere(ituBoundingSphere);
+    });
+
+    function updateGeographicCoordinates(cartographic) {
+const lonDegrees = Cesium.Math.toDegrees(cartographic.longitude);
+const latDegrees = Cesium.Math.toDegrees(cartographic.latitude);
+
+const lon = Math.abs(lonDegrees).toFixed(6);
+const lat = Math.abs(latDegrees).toFixed(6);
+
+const lonDirection = lonDegrees >= 0 ? 'E' : 'W';
+const latDirection = latDegrees >= 0 ? 'N' : 'S';
+
+const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+
+return `Lon: ${lon}° ${lonDirection}, Lat: ${lat}° ${latDirection}, Height: ${height}m`;
+}
+
+// Coordinate bar update function for Cartesian mode
+function updateCartesianCoordinates(cartographic) {
+const cartesian = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height);
+const x = cartesian.x.toFixed(4);
+const y = cartesian.y.toFixed(4);
+const z = cartesian.z.toFixed(4);
+return `X: ${x} m, Y: ${y} m, Z: ${z} m`;
+}
+
+// Main function to update coordinates bar based on selected mode
+function updateCoordinatesBar(cartographic, mode) {
+let coordinatesText;
+if (mode === 'geographic') {
+    coordinatesText = updateGeographicCoordinates(cartographic);
+} else if (mode === 'cartesian') {
+    coordinatesText = updateCartesianCoordinates(cartographic);
+}
+document.getElementById('coordinateValues').innerText = coordinatesText;
+}
+
+// Mouse move event listener for coordinates bar
+const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction((movement) => {
+const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+if (cartesian) {
+    const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+    const mode = document.getElementById('coordinateMode').value;
+    updateCoordinatesBar(cartographic, mode);
+} else {
+    document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+}
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+// Dropdown change event listener to update coordinates based on selected mode
+document.getElementById('coordinateMode').addEventListener('change', (event) => {
+const cartesian = viewer.camera.pickEllipsoid(handler._lastMovement.endPosition, viewer.scene.globe.ellipsoid);
+if (cartesian) {
+    const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+    updateCoordinatesBar(cartographic, event.target.value);
+} else {
+    document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+}
+});
+
+document.getElementById('angleCalculator').addEventListener('click', () => {
+    document.body.style.cursor = 'crosshair';
+
+    let points = [];
+    let lines = [];
+    let angles = [];
+    let arcEntities = [];
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    // Right-click for point creation
+    handler.setInputAction((movement) => {
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (!cartesian) return;
+
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        points.push(cartographic);
+
+        // Add the point entity
+        viewer.entities.add({
+            position: cartesian,
+            point: {
+                pixelSize: 10,
+                color: Cesium.Color.YELLOW,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            },
+            label: {
+                text: `Point ${points.length}`,
+                font: '16px sans-serif',
+                fillColor: Cesium.Color.BLACK,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2,
+                pixelOffset: new Cesium.Cartesian2(0, -25),
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            },
+        });
+
+        // Create lines and calculate angles if more than two points
+        if (points.length > 1) {
+            const start = points[points.length - 2];
+            const end = points[points.length - 1];
+
+            const startCartesian = Cesium.Cartesian3.fromRadians(start.longitude, start.latitude, start.height);
+            const endCartesian = Cesium.Cartesian3.fromRadians(end.longitude, end.latitude, end.height);
+
+            const distance = Cesium.Cartesian3.distance(startCartesian, endCartesian).toFixed(2);
+
+            // Add a line entity
+            const line = viewer.entities.add({
+                polyline: {
+                    positions: [startCartesian, endCartesian],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7),
+                    clampToGround: true,
+                },
+                label: {
+                    text: `${distance} meters`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                },
+                position: Cesium.Cartesian3.midpoint(startCartesian, endCartesian, new Cesium.Cartesian3()),
+            });
+            lines.push(line);
+
+            // If there are more than two points, calculate and display angle
+            if (points.length > 2) {
+                const prevStart = points[points.length - 3];
+                const prevEnd = start;
+
+                const prevVector = Cesium.Cartesian3.subtract(
+                    Cesium.Cartesian3.fromRadians(prevEnd.longitude, prevEnd.latitude, prevEnd.height),
+                    Cesium.Cartesian3.fromRadians(prevStart.longitude, prevStart.latitude, prevStart.height),
+                    new Cesium.Cartesian3()
+                );
+
+                const currentVector = Cesium.Cartesian3.subtract(
+                    Cesium.Cartesian3.fromRadians(end.longitude, end.latitude, end.height),
+                    Cesium.Cartesian3.fromRadians(start.longitude, start.latitude, start.height),
+                    new Cesium.Cartesian3()
+                );
+
+                const angleRadians = Cesium.Cartesian3.angleBetween(prevVector, currentVector);
+                const angleDegrees = Cesium.Math.toDegrees(angleRadians).toFixed(2);
+
+                // Find the center of the angle to place the label
+                const centerCartesian = Cesium.Cartesian3.fromRadians(start.longitude, start.latitude, start.height);
+
+                // Create arc positions for visualization
+                const arcPositions = calculateArcPositions(start, prevVector, currentVector, angleRadians);
+
+                // Draw the arc
+                const arcEntity = viewer.entities.add({
+                    polyline: {
+                        positions: arcPositions,
+                        width: 2,
+                        material: Cesium.Color.RED.withAlpha(0.8),
+                        clampToGround: true,
+                    },
+                });
+                arcEntities.push(arcEntity);
+
+                // Place the angle label inside the arc
+                const arcMidPoint = arcPositions[Math.floor(arcPositions.length / 2)];
+
+                const angleLabel = viewer.entities.add({
+                    position: arcMidPoint,
+                    label: {
+                        text: `${angleDegrees}°`,
+                        font: '14px sans-serif',
+                        fillColor: Cesium.Color.RED,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        pixelOffset: new Cesium.Cartesian2(0, -20),
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                    },
+                });
+                angles.push(angleLabel);
+            }
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // Left-click to reset the crosshair and stop point creation
+    handler.setInputAction(() => {
+        document.body.style.cursor = 'default';
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // Escape key to reset everything
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            document.body.style.cursor = 'default';
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            viewer.entities.removeAll();
+            points = [];
+            lines = [];
+            angles = [];
+            arcEntities = [];
+        }
+    });
+
+    // Helper function to calculate arc positions
+    function calculateArcPositions(center, vec1, vec2, angleRadians) {
+        const numPoints = 100; // number of points to define the arc
+        const stepAngle = angleRadians / numPoints;
+        const arcPositions = [];
+
+        for (let i = 0; i <= numPoints; i++) {
+            const currentAngle = i * stepAngle;
+            const interpolatedVec = Cesium.Cartesian3.lerp(vec1, vec2, currentAngle / angleRadians, new Cesium.Cartesian3());
+            const arcPosition = Cesium.Cartesian3.add(center, interpolatedVec, new Cesium.Cartesian3());
+            arcPositions.push(arcPosition);
+        }
+
+        return arcPositions;
+    }
+});
+
+
+      } catch (error) {
+        console.error("An error occurred: ", error);
+      }
+    })();
+  </script>
+</body>
+</html>

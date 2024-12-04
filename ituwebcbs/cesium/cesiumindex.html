@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #coordinatesBar {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    #titleBar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 24px;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="coordinatesBar"></div>
+  <div id="titleBar">Akıllı Şehir Çalışma Örnekleri</div>
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+(async () => {
+  try {
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+    });
+
+    viewer.scene.globe.depthTestAgainstTerrain = true;
+
+    // Load the Bing imagery layer with asset ID "2"
+    const bingImageryLayer = viewer.imageryLayers.addImageryProvider(
+      await Cesium.IonImageryProvider.fromAssetId(2)
+    );
+
+    // Add Google Photorealistic 3D Tiles but do not show it initially
+    const googlePhotorealistic = await Cesium.Cesium3DTileset.fromIonAssetId(2275207);
+    googlePhotorealistic.show = false;
+    viewer.scene.primitives.add(googlePhotorealistic);
+
+    // Add an event listener to switch imagery layers based on the zoom level
+    viewer.camera.moveEnd.addEventListener(() => {
+      const zoomThreshold = 5000000; // Adjust the zoom threshold as needed
+      if (viewer.camera.positionCartographic.height < zoomThreshold) {
+        // Show photorealistic imagery when zoomed in
+        if (!googlePhotorealistic.show) {
+          googlePhotorealistic.show = true;
+          bingImageryLayer.show = false;
+        }
+      } else {
+        // Show Bing imagery when zoomed out
+        if (googlePhotorealistic.show) {
+          googlePhotorealistic.show = false;
+          bingImageryLayer.show = true;
+        }
+      }
+    });
+        // Coordinate bar update function
+        function updateCoordinatesBar(cartographic) {
+          const lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(6);
+          const lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(6);
+          const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+          document.getElementById('coordinatesBar').innerText = `Lon: ${lon}, Lat: ${lat}, Height: ${height}m`;
+        }
+
+        // Mouse move event listener for coordinates bar
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((movement) => {
+          const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+          if (cartesian) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            updateCoordinatesBar(cartographic);
+          }
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+        // Existing points with links
+        const cities = [
+          { name: "Zürih", coordinates: [8.541694, 47.3768866, 1000], url: "https://www.stadt-zuerich.ch/prd/en/index/urban-development/smart-city.html", colors: [Cesium.Color.WHITE, Cesium.Color.RED] },
+          { name: "Oslo", coordinates: [10.757933, 59.911491, 1000], url: "https://nscn.eu/Oslo", colors: [Cesium.Color.BLUE, Cesium.Color.WHITE] },
+          { name: "Amsterdam", coordinates: [4.9041389, 52.3675734, 1000], url: "https://amsterdamsmartcity.com/", colors: [Cesium.Color.RED, Cesium.Color.WHITE] },
+          { name: "Singapore", coordinates: [103.851959, 1.290270, 1000], url: "https://www.smartnation.gov.sg/", colors: [Cesium.Color.RED, Cesium.Color.WHITE] },
+          { name: "Helsinki", coordinates: [24.9410248, 60.1733244, 1000], url: "https://helsinkismart.fi/", colors: [Cesium.Color.BLUE, Cesium.Color.WHITE] },
+          { name: "Reykjavik", coordinates: [-21.817439, 64.135484, 1000], url: "https://nscn.eu/Reykjavik", colors: [Cesium.Color.BLUE, Cesium.Color.RED] },
+          { name: "Hamburg", coordinates: [9.993682, 53.551085, 1000], url: "https://marketing.hamburg.de/smartcity.html", colors: [Cesium.Color.BLACK, Cesium.Color.RED] },
+          { name: "İstanbul", coordinates: [29.025723, 41.104745, 1000], url: "https://uakim.itu.edu.tr/", colors: [Cesium.Color.RED, Cesium.Color.WHITE] },
+          { name: "Tokyo", coordinates: [139.691706, 35.689487, 1000], url: "https://www.smart-tokyo.metro.tokyo.lg.jp/en/", colors: [Cesium.Color.RED, Cesium.Color.WHITE] },
+          { name: "Seoul", coordinates: [126.977969, 37.566535, 1000], url: "https://english.seoul.go.kr/policy/smart-city/", colors: [Cesium.Color.BLUE, Cesium.Color.WHITE] },
+          { name: "Auckland", coordinates: [174.6311984, -36.8712065, 1000], url: "https://conversations.aucklandcouncil.govt.nz/events/smart-city-vision-auckland", colors: [Cesium.Color.RED, Cesium.Color.YELLOW] },
+          { name: "New York", coordinates: [-74.006, 40.7128, 1000], url: "https://edc.nyc/industry/smart-cities", colors: [Cesium.Color.BLUE, Cesium.Color.WHITE] },
+          { name: "San Francisco", coordinates: [-122.4194, 37.7749, 1000], url: "http://smartcitysf.com/", colors: [Cesium.Color.BLUE, Cesium.Color.YELLOW] },
+          { name: "Toronto", coordinates: [-79.3832, 43.6532, 1000], url: "https://ccla.org/major-cases-and-reports/torontos-smart-city/?gad_source=1&gclid=CjwKCAjwnqK1BhBvEiwAi7o0XxxChij9J8tvD8Xf85EaOeDwPf0NP5J9zKstg4hFjcLr0zyLrlQ9uxoCLVIQAvD_BwE", colors: [Cesium.Color.RED, Cesium.Color.WHITE] },
+          { name: "Sydney", coordinates: [151.2093, -33.8688, 1000], url: "https://smartcities.smashdelta.com/", colors: [Cesium.Color.RED, Cesium.Color.BLUE] },
+          { name: "Melbourne", coordinates: [144.9631, -37.8136, 1000], url: "https://www.melbourne.vic.gov.au/melbourne-smart-city", colors: [Cesium.Color.RED, Cesium.Color.WHITE] },
+          { name: "Buenos Aires", coordinates: [-58.3816, -34.6037, 1000], url: "https://www.webuildvalue.com/en/global-economy-sustainability/buenos-aires-smartest-city-2021.html", colors: [Cesium.Color.BLUE, Cesium.Color.YELLOW] }
+        ];
+
+        cities.forEach(city => {
+          viewer.entities.add({
+            name: city.name,
+            position: Cesium.Cartesian3.fromDegrees(city.coordinates[0], city.coordinates[1], city.coordinates[2]),
+            point: {
+              pixelSize: 10,
+              color: city.colors[0],
+              outlineColor: city.colors[1],
+              outlineWidth: 2
+            },
+            label: {
+              text: city.name,
+              font: '14pt sans-serif',
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              outlineWidth: 2,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffset: new Cesium.Cartesian2(0, -12)
+            },
+            description: `<a href="${city.url}" target="_blank">${city.url}</a>`
+          });
+        });
+
+        viewer.selectedEntityChanged.addEventListener(function () {
+          const selectedEntity = viewer.selectedEntity;
+          if (Cesium.defined(selectedEntity)) {
+            const description = selectedEntity.description.getValue(Cesium.JulianDate.now());
+            if (description) {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(description, 'text/html');
+              const link = doc.querySelector('a');
+              if (link) {
+                window.open(link.href, '_blank');
+              }
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error("An error occurred: ", error);
+      }
+    })();
+  </script>
+</body>
+</html>

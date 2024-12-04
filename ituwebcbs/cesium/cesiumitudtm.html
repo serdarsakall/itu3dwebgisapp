@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .button-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .button-container button {
+      margin: 5px 0;
+      background-color: #f8f8f8;
+      color: black;
+      border: 1px solid #ccc;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 5px;
+      width: 200px;
+    }
+    #coordinatesBar {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div class="button-container">
+    <button id="zoomToITU">Zoom to İTÜ Ayazağa Campus</button>
+    <button id="toggleTerrain">Terrain</button>
+  </div>
+  <div id="coordinatesBar"></div>
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+    (async () => {
+      try {
+        // Başlangıçta Cesium World Terrain'i yükle
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+          terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+        });
+
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+
+        // Coordinate bar update function
+        function updateCoordinatesBar(cartographic) {
+          const lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(6);
+          const lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(6);
+          // Terrain'e bağlı yüksekliği doğru şekilde alıyoruz
+          const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+          document.getElementById('coordinatesBar').innerText = `Lon: ${lon}, Lat: ${lat}, Height: ${height}m`;
+        }
+
+        // Mouse move event listener for coordinates bar
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((movement) => {
+          const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+          if (cartesian) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            updateCoordinatesBar(cartographic);
+          }
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+        // Terrain visibility toggle function
+        let terrainVisible = true;
+        document.getElementById('toggleTerrain').addEventListener('click', async () => {
+          terrainVisible = !terrainVisible;
+          if (terrainVisible) {
+            // Terrain'i tekrar aç
+            viewer.terrainProvider = await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560);
+            // Terrain Provider'ı Cesium World Terrain olarak tut
+            viewer.scene.globe.terrainProvider = Cesium.createWorldTerrain();
+          } else {
+            // Terrain'i kaldır
+            viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+            // Terrain Provider'ı düz ellipsoid yap
+            viewer.scene.globe.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+          }
+        });
+
+        // Zoom to ITU function
+        document.getElementById('zoomToITU').addEventListener('click', () => {
+          const ituBoundingSphere = new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(29.0224, 41.1055), 1000);
+          viewer.camera.flyToBoundingSphere(ituBoundingSphere);
+        });
+
+        // Add a point at ITU Ayazağa Campus center with yellow color
+        const point = viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(29.0224, 41.1055), // ITU Ayazağa Campus center
+          point: {
+            pixelSize: 10,
+            color: Cesium.Color.YELLOW,
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 2,
+          }
+        });
+
+      } catch (error) {
+        console.error("An error occurred: ", error);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #toolbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #toolbar button {
+      color: white;
+      background-color: #444;
+      border: 1px solid #555;
+      padding: 5px 10px;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    #coordinatesBar {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    z-index: 10;
+    background-color: rgba(42, 42, 42, 0.8);
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    display: flex; /* Flexbox ile yatay hizalama */
+    align-items: center; /* Dikey hizalamayı ortala */
+}
+
+#coordinateMode {
+    margin-right: 10px; /* Seçenek menüsü ile koordinat değeri arasındaki boşluk */
+}
+
+#coordinateValues {
+    margin: 0; /* Koordinat değeri için sıfır marj */
+}
+    #titleBar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 18px;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="titleBar">Ayazağa Kampüsü Görünürlük Analizi</div>
+  <div id="toolbar">
+    <button id="zoomToITU">Zoom to İTÜ Ayazağa Campus</button>
+    <button id="toggleViewshed">Viewshed Analysis</button>
+  </div>
+  <div id="coordinatesBar">
+    <select id="coordinateMode">
+        <option value="geographic">Geographic</option>
+        <option value="cartesian">Cartesian</option>
+    </select>
+    <div id="coordinateValues"></div>
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+    (async () => {
+      try {
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+          terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+        });
+
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+
+        const imageryLayer = viewer.imageryLayers.addImageryProvider(
+          await Cesium.IonImageryProvider.fromAssetId(2656561),
+        );
+
+        const tilesets = [
+          2654260, 2654259, 2654257, 2654256, 2654255, 2654253, 2654252, 2654251,
+          2654250, 2654249, 2654248, 2654246, 2654243, 2654241, 2654239, 2658263,
+          2658261, 2658258, 2658247, 2658239, 2658220, 2658205, 2658186, 2658080,
+          2658066, 2658057, 2657980, 2657979, 2657947, 2657944, 2657943, 2657806,
+          2657804, 2657802, 2657801, 2657799, 2657795, 2657793, 2657789, 2657788,
+          2657787, 2654283, 2654282, 2654281, 2654280, 2654279, 2654277, 2654276,
+          2654275, 2654274, 2654273, 2654271, 2654270, 2654269, 2654268, 2654267,
+          2654266, 2654265, 2654264, 2654262, 2654261,
+        ];
+
+        const tilesetPrimitives = await Promise.all(tilesets.map(async (assetId) => {
+          const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+          viewer.scene.primitives.add(tileset);
+          return tileset;
+        }));
+
+        tilesetPrimitives.forEach(tileset => {
+          const extras = tileset.asset.extras;
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.defaultStyle)) {
+            tileset.style = new Cesium.Cesium3DTileStyle(extras.ion.defaultStyle);
+          }
+
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.georeferencedBoundingBox)) {
+            const bbox = extras.ion.georeferencedBoundingBox;
+            const center = Cesium.BoundingSphere.fromCornerPoints(
+              Cesium.Cartesian3.fromDegrees(bbox.west, bbox.south),
+              Cesium.Cartesian3.fromDegrees(bbox.east, bbox.north)
+            ).center;
+            tileset.readyPromise.then(() => {
+              viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0, -0.5, center.z * 2.0));
+            });
+          }
+        });
+
+        document.getElementById('toggleViewshed').addEventListener('click', () => {
+    document.body.style.cursor = 'crosshair';
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    let observationPoint = null;
+    let rangeLimiters = [];
+    let targetPoints = [];
+    let lines = [];
+    let failedObservations = 0;
+    let analysisFinished = false;
+
+    handler.setInputAction((movement) => {
+        if (analysisFinished) return;
+
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (cartesian && !observationPoint) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            observationPoint = viewer.entities.add({
+                name: 'Observation Point',
+                position: cartesian,
+                point: { pixelSize: 10, color: Cesium.Color.GREEN },
+                label: {
+                    text: 'Observation Point',
+                    font: '16px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                },
+                description: `
+                  Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+                  Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}
+                `,
+            });
+        } else if (cartesian && rangeLimiters.length < 2) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            const rangeLimiter = viewer.entities.add({
+                name: `Range Limiter ${rangeLimiters.length + 1}`,
+                position: cartesian,
+                point: { pixelSize: 10, color: Cesium.Color.GREEN },
+                label: {
+                    text: `Range Limiter ${rangeLimiters.length + 1}`,
+                    font: '16px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                },
+                description: `
+                  Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+                  Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}
+                `,
+            });
+
+            rangeLimiters.push(rangeLimiter);
+
+            // Draw black line between Observation Point and Range Limiter
+            const startPosition = observationPoint.position.getValue(Cesium.JulianDate.now());
+            const line = viewer.entities.add({
+                polyline: {
+                    positions: [startPosition, cartesian],
+                    width: 2,
+                    material: Cesium.Color.BLACK,
+                },
+            });
+            lines.push(line);
+
+            if (rangeLimiters.length === 2) {
+                // Begin ray scattering analysis between Range Limiters
+                performRayScattering(startPosition, rangeLimiters);
+            }
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    handler.setInputAction(() => {
+        analysisFinished = true;
+        document.body.style.cursor = 'default';
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === "Escape") {
+            document.body.style.cursor = 'default';
+            viewer.entities.removeAll();
+            observationPoint = null;
+            rangeLimiters = [];
+            targetPoints = [];
+            lines = [];
+            failedObservations = 0;
+        }
+    });
+
+    function performRayScattering(startPosition, rangeLimiters) {
+        const numRays = 60; // Increase number of rays for higher density
+        const rangeStart = rangeLimiters[0].position.getValue(Cesium.JulianDate.now());
+        const rangeEnd = rangeLimiters[1].position.getValue(Cesium.JulianDate.now());
+        const totalDistance = Cesium.Cartesian3.distance(rangeStart, rangeEnd);
+
+        for (let i = 0; i < numRays; i++) {
+            const fraction = i / (numRays - 1); // Spread rays evenly
+            const interpolatedPoint = Cesium.Cartesian3.lerp(rangeStart, rangeEnd, fraction, new Cesium.Cartesian3());
+
+            const direction = Cesium.Cartesian3.normalize(
+                Cesium.Cartesian3.subtract(interpolatedPoint, startPosition, new Cesium.Cartesian3()),
+                new Cesium.Cartesian3()
+            );
+
+            const ray = new Cesium.Ray(startPosition, direction);
+
+            viewer.scene.pickFromRayMostDetailed(ray).then((result) => {
+                if (result && Cesium.Cartesian3.distance(startPosition, result.position) < totalDistance) {
+                    const lineGreen = viewer.entities.add({
+                        polyline: {
+                            positions: [startPosition, result.position],
+                            width: 2,
+                            material: Cesium.Color.GREEN,
+                        },
+                    });
+                    lines.push(lineGreen);
+
+                    const obstaclePoint = viewer.entities.add({
+                        name: `Obstacle Point ${targetPoints.length + 1}`,
+                        position: result.position,
+                        point: { pixelSize: 10, color: Cesium.Color.YELLOW },
+                        label: {
+                            text: `Obstacle Point`,
+                            font: '16px sans-serif',
+                            fillColor: Cesium.Color.WHITE,
+                            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                            pixelOffset: new Cesium.Cartesian2(0, -20),
+                        },
+                    });
+
+                    const lineRed = viewer.entities.add({
+                        polyline: {
+                            positions: [result.position, interpolatedPoint],
+                            width: 2,
+                            material: Cesium.Color.RED,
+                        },
+                    });
+                    lines.push(lineRed);
+                } else {
+                    const line = viewer.entities.add({
+                        polyline: {
+                            positions: [startPosition, interpolatedPoint],
+                            width: 2,
+                            material: Cesium.Color.GREEN,
+                        },
+                    });
+                    lines.push(line);
+                }
+            });
+        }
+    }
+});
+
+
+        // Zoom to ITU function
+        document.getElementById('zoomToITU').addEventListener('click', () => {
+          const ituBoundingSphere = new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(29.0224, 41.1055), 1000);
+          viewer.camera.flyToBoundingSphere(ituBoundingSphere);
+        });
+
+        function updateGeographicCoordinates(cartographic) {
+    const lonDegrees = Cesium.Math.toDegrees(cartographic.longitude);
+    const latDegrees = Cesium.Math.toDegrees(cartographic.latitude);
+    
+    const lon = Math.abs(lonDegrees).toFixed(6);
+    const lat = Math.abs(latDegrees).toFixed(6);
+    
+    const lonDirection = lonDegrees >= 0 ? 'E' : 'W';
+    const latDirection = latDegrees >= 0 ? 'N' : 'S';
+    
+    const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+
+    return `Lon: ${lon}° ${lonDirection}, Lat: ${lat}° ${latDirection}, Height: ${height}m`;
+}
+
+// Coordinate bar update function for Cartesian mode
+function updateCartesianCoordinates(cartographic) {
+    const cartesian = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height);
+    const x = cartesian.x.toFixed(4);
+    const y = cartesian.y.toFixed(4);
+    const z = cartesian.z.toFixed(4);
+    return `X: ${x} m, Y: ${y} m, Z: ${z} m`;
+}
+
+// Main function to update coordinates bar based on selected mode
+function updateCoordinatesBar(cartographic, mode) {
+    let coordinatesText;
+    if (mode === 'geographic') {
+        coordinatesText = updateGeographicCoordinates(cartographic);
+    } else if (mode === 'cartesian') {
+        coordinatesText = updateCartesianCoordinates(cartographic);
+    }
+    document.getElementById('coordinateValues').innerText = coordinatesText;
+}
+
+// Mouse move event listener for coordinates bar
+const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction((movement) => {
+    const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        const mode = document.getElementById('coordinateMode').value;
+        updateCoordinatesBar(cartographic, mode);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+    }
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+// Dropdown change event listener to update coordinates based on selected mode
+document.getElementById('coordinateMode').addEventListener('change', (event) => {
+    const cartesian = viewer.camera.pickEllipsoid(handler._lastMovement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        updateCoordinatesBar(cartographic, event.target.value);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+    }
+});
+
+      } catch (error) {
+        console.error("An error occurred while loading the Cesium viewer:", error);
+      }
+    })();
+  </script>
+</body>
+</html>

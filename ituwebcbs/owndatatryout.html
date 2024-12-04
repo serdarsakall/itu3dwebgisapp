@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cesium Terrain Visualization</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.97/Build/Cesium/Cesium.js"></script>
+    <style>
+        @import url('https://cesium.com/downloads/cesiumjs/releases/1.97/Build/Cesium/Widgets/widgets.css');
+        html, body, #cesiumContainer {
+            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        // Access token
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw';
+
+        var viewer = new Cesium.Viewer('cesiumContainer', {
+    terrainProvider: new Cesium.CesiumTerrainProvider({
+        url: 'http://127.0.0.1:5500/ITU_DTM/ITU_AyazagaCampus_DTM.tif' // terrain dosyanızın doğru yolu
+    }),
+    imageryProvider: new Cesium.IonImageryProvider({ assetId: 3 }), // Varsayılan dünya görüntüsü
+    baseLayerPicker: false // Gereksiz katman seçim aracını devre dışı bırak
+});
+
+
+        // Custom camera view for your terrain
+        viewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(29.0225, 41.105, 500), // ITU Ayazağa'nın koordinatlarına yakın değerler
+            orientation: {
+                heading: Cesium.Math.toRadians(0),
+                pitch: Cesium.Math.toRadians(-35),
+                roll: 0.0
+            }
+        });
+    </script>
+</body>
+</html>

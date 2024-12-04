@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .button-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .button-container button {
+      margin: 5px 0;
+      background-color: #f8f8f8;
+      color: black;
+      border: 1px solid #ccc;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 5px;
+      width: 200px;
+    }
+    .dropdown-content {
+      display: none;
+      flex-direction: column;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+    .dropdown-content.show {
+      display: flex;
+    }
+    .dropdown-content button {
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    .dropdown-content button.active {
+      color: limegreen;
+    }
+    #coordinatesBar {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    #legend {
+      position: absolute;
+      bottom: 60px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 5px;
+      border-radius: 5px;
+      display: none;
+    }
+    .legend-title {
+      color: white;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      margin: 2px 0;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
+      display: inline-block;
+    }
+    .legend-text {
+      color: white;
+    }
+    #titleBar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 24px;
+      font-family: sans-serif;
+    }
+
+    .dropdown-content div {
+      color: white;
+      margin-bottom: 5px;
+    }
+
+    #analyzeOverlay {
+      margin-top: 10px;
+      background-color: #f8f8f8;
+      color: black;
+      border: 1px solid #ccc;
+      padding: 10px;
+      cursor: pointer;
+      text-align: center;
+      border-radius: 5px;
+      display: none; /* Initially hidden */
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="titleBar">Ayazağa Kampüsü Giriş Kapıları Çakışma Analizi</div>
+  <div class="button-container">
+    <button id="zoomToITU">Zoom to İTÜ Ayazağa Campus</button>
+    <div class="dropdown">
+      <button class="dropdown-button">Overlay Analysis</button>
+      <div class="dropdown-content">
+        <div>Select Buffers:</div>
+        <button id="bufferEnerji">İTÜ Enerji Kapı</button>
+        <button id="bufferAri">İTÜ Arı Kapı</button>
+        <button id="bufferAkademik">İTÜ Akademik Kapı</button>
+      </div>
+      <button id="analyzeOverlay">Analyze Overlay</button>
+    </div>
+  </div>
+  <div id="coordinatesBar"></div>
+  <div id="legend">
+    <div class="legend-title">Distance by</div>
+    <div class="legend-row">
+      <div class="legend-color" style="background-color: #008000;"></div>
+      <div class="legend-text">5 min walk</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-color" style="background-color: #ADFF2F;"></div>
+      <div class="legend-text">10 min walk</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-color" style="background-color: #FFFF00;"></div>
+      <div class="legend-text">15 min walk</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-color" style="background-color: #FFA500;"></div>
+      <div class="legend-text">20 min walk</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-color" style="background-color: #FF4500;"></div>
+      <div class="legend-text">25 min walk</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-color" style="background-color: #FF0000;"></div>
+      <div class="legend-text">30 min walk</div>
+    </div>
+  </div>
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+    (async () => {
+        try {
+            const viewer = new Cesium.Viewer("cesiumContainer", {
+                terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+            });
+
+            viewer.scene.globe.depthTestAgainstTerrain = true;
+
+            const imageryLayer = viewer.imageryLayers.addImageryProvider(
+                await Cesium.IonImageryProvider.fromAssetId(2656561),
+            );
+
+            const tilesets = [
+          2654260, 2654259, 2654257, 2654256, 2654255, 2654253, 2654252, 2654251,
+          2654250, 2654249, 2654248, 2654246, 2654243, 2654241, 2654239, 2658263,
+          2658261, 2658258, 2658247, 2658239, 2658220, 2658205, 2658186, 2658080,
+          2658066, 2658057, 2657980, 2657979, 2657947, 2657944, 2657943, 2657806,
+          2657804, 2657802, 2657801, 2657799, 2657795, 2657793, 2657789, 2657788,
+          2657787, 2654283, 2654282, 2654281, 2654280, 2654279, 2654277, 2654276,
+          2654275, 2654274, 2654273, 2654271, 2654270, 2654269, 2654268, 2654267,
+          2654266, 2654265, 2654264, 2654262, 2654261,
+        ];
+
+        const tilesetPrimitives = await Promise.all(tilesets.map(async (assetId) => {
+          const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+          viewer.scene.primitives.add(tileset);
+          return tileset;
+        }));
+
+        tilesetPrimitives.forEach(tileset => {
+          const extras = tileset.asset.extras;
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.defaultStyle)) {
+            tileset.style = new Cesium.Cesium3DTileStyle(extras.ion.defaultStyle);
+          }
+
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.georeferencedBoundingBox)) {
+            const bbox = extras.ion.georeferencedBoundingBox;
+            const center = Cesium.BoundingSphere.fromCornerPoints(
+              Cesium.Cartesian3.fromDegrees(bbox.west, bbox.south),
+              Cesium.Cartesian3.fromDegrees(bbox.east, bbox.north)
+            ).center;
+            tileset.readyPromise.then(() => {
+              viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0, -0.5, center.z * 2.0));
+            });
+          }
+        });
+
+                // Coordinate bar update function
+                function updateCoordinatesBar(cartographic) {
+          const lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(6);
+          const lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(6);
+          const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+          document.getElementById('coordinatesBar').innerText = `Lon: ${lon}, Lat: ${lat}, Height: ${height}m`;
+        }
+
+        // Mouse move event listener for coordinates bar
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((movement) => {
+          const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+          if (cartesian) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            updateCoordinatesBar(cartographic);
+          }
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+            // Buffer analysis function
+            const bufferPositions = {
+                enerji: Cesium.Cartesian3.fromDegrees(29.0291236992, 41.1084268266, 206.3230365419),
+                ari: Cesium.Cartesian3.fromDegrees(29.022218979, 41.10813134, 193.0399846551),
+                akademik: Cesium.Cartesian3.fromDegrees(29.015101222, 41.1063193229, 167.55825937),
+            };
+
+            const bufferDistances = [300, 600, 900, 1200, 1500, 1800, 2400]; // Updated for 5, 10, 15, 20, 25, 30, and 40 minutes walk
+            const bufferColors = [
+                Cesium.Color.fromCssColorString("#008000").withAlpha(0.2),
+                Cesium.Color.fromCssColorString("#ADFF2F").withAlpha(0.2),
+                Cesium.Color.fromCssColorString("#FFFF00").withAlpha(0.2),
+                Cesium.Color.fromCssColorString("#FFA500").withAlpha(0.2),
+                Cesium.Color.fromCssColorString("#FF4500").withAlpha(0.2),
+                Cesium.Color.fromCssColorString("#FF0000").withAlpha(0.2),
+                Cesium.Color.fromCssColorString("#8B0000").withAlpha(0.2),
+            ];
+
+            function createBuffers(position, distances, colors) {
+                return distances.map((distance, index) => {
+                    return viewer.entities.add({
+                        position: position,
+                        ellipse: {
+                            semiMinorAxis: distance,
+                            semiMajorAxis: distance,
+                            material: colors[index],
+                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                            classificationType: Cesium.ClassificationType.TERRAIN,
+                        },
+                        show: false
+                    });
+                });
+            }
+
+            function toggleBuffers(bufferEntities, show) {
+                bufferEntities.forEach(entity => entity.show = show);
+            }
+
+            const bufferEntities = {};
+            for (const key in bufferPositions) {
+                bufferEntities[key] = createBuffers(bufferPositions[key], bufferDistances, bufferColors);
+            }
+
+            document.getElementById('zoomToITU').addEventListener('click', () => {
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(29.0214, 41.1055, 2000),
+                    duration: 3,
+                });
+            });
+
+            document.querySelector(".dropdown-button").addEventListener("click", () => {
+                const content = document.querySelector(".dropdown-content");
+                content.classList.toggle("show");
+            });
+
+            document.getElementById('bufferEnerji').addEventListener('click', () => {
+                const buffersVisible = !bufferEntities.enerji[0].show;
+                toggleBuffers(bufferEntities.enerji, buffersVisible);
+                document.getElementById('legend').style.display = buffersVisible ? 'block' : 'none';
+                toggleButtonActiveState(document.getElementById("bufferEnerji"), buffersVisible);
+                updateAnalyzeOverlayButton();
+            });
+
+            document.getElementById('bufferAri').addEventListener('click', () => {
+                const buffersVisible = !bufferEntities.ari[0].show;
+                toggleBuffers(bufferEntities.ari, buffersVisible);
+                document.getElementById('legend').style.display = buffersVisible ? 'block' : 'none';
+                toggleButtonActiveState(document.getElementById("bufferAri"), buffersVisible);
+                updateAnalyzeOverlayButton();
+            });
+
+            document.getElementById('bufferAkademik').addEventListener('click', () => {
+                const buffersVisible = !bufferEntities.akademik[0].show;
+                toggleBuffers(bufferEntities.akademik, buffersVisible);
+                document.getElementById('legend').style.display = buffersVisible ? 'block' : 'none';
+                toggleButtonActiveState(document.getElementById("bufferAkademik"), buffersVisible);
+                updateAnalyzeOverlayButton();
+            });
+
+            function toggleButtonActiveState(button, isActive) {
+                if (isActive) {
+                    button.classList.add("active");
+                } else {
+                    button.classList.remove("active");
+                }
+            }
+
+            function updateAnalyzeOverlayButton() {
+                const activeBuffers = [
+                    ...bufferEntities.enerji,
+                    ...bufferEntities.ari,
+                    ...bufferEntities.akademik,
+                ].filter(entity => entity.show).length;
+
+                const analyzeButton = document.getElementById("analyzeOverlay");
+
+                if (activeBuffers >= 2) {
+                    analyzeButton.style.display = "block";
+                } else {
+                    analyzeButton.style.display = "none";
+                }
+            }
+
+            document.getElementById("analyzeOverlay").addEventListener("click", () => {
+                alert("Overlay analysis started");
+            });
+        } catch (error) {
+            console.error("An error occurred while loading Cesium:", error);
+        }
+    })();
+</script>
+
+</body>
+</html>

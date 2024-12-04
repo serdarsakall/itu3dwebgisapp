@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>İTÜ AKİM WebCBS</title>
+	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
+	<link rel="icon" href="../assets/img/logos/ituakimfavicon.png" type="image/x-icon"/>
+
+	<!-- Fonts and icons -->
+	<script src="../assets/js/plugin/webfont/webfont.min.js"></script>
+	<script>
+		WebFont.load({
+			google: {"families":["Public Sans:300,400,500,600,700"]},
+			custom: {"families":["Font Awesome 5 Solid", "Font Awesome 5 Regular", "Font Awesome 5 Brands", "simple-line-icons"], urls: ['../assets/css/fonts.min.css']},
+			active: function() {
+				sessionStorage.fonts = true;
+			}
+		});
+	</script>
+
+	<!-- CSS Files -->
+	<link rel="stylesheet" href="../assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="../assets/css/plugins.min.css">
+	<link rel="stylesheet" href="../assets/css/kaiadmin.min.css">
+
+	<!-- CSS Just for demo purpose, don't include it in your project -->
+	<link rel="stylesheet" href="../assets/css/demo.css">
+</head>
+<body>
+	<div class="wrapper">
+		<!-- Sidebar -->
+		<div class="sidebar" data-background-color="white">
+			<div class="sidebar-logo">
+				<!-- Logo Header -->
+				<div class="logo-header" data-background-color="white">
+
+					<a href="../index.html" class="logo">
+						<img src="../assets/img/logos/itu-akim-logo.jpg" alt="navbar brand" class="navbar-brand" height="35">
+					</a>
+				</div>
+				<!-- End Logo Header -->	
+			</div>	
+			<div class="sidebar-wrapper scrollbar scrollbar-inner">
+				<div class="sidebar-content">
+					<ul class="nav nav-secondary">
+						<li class="nav-item">
+							<a
+                   href="/index.html">
+                  <!-- data-bs-toggle="collapse" -->
+                  <!-- href="#dashboard" -->
+                  <!-- class="collapsed" -->
+                  <!-- aria-expanded="false" -->
+                <!-- > -->
+                  <i class="fas fa-home"></i>
+                  <p>Anasayfa</p>
+                  <!-- <span class="caret"></span> -->
+                </a>
+							  <div class="collapse" id="dashboard">
+								<ul class="nav nav-collapse">
+								  <li>
+									<!-- <a href="../demo1/index.html"> -->
+									  <!-- <span class="sub-item">Dashboard 1</span> -->
+									<!-- </a> -->
+									</li>
+								</ul>
+							</div>
+						</li>
+						<li class="nav-section">
+							<span class="sidebar-mini-icon">
+								<i class="fa fa-ellipsis-h"></i>
+							</span>
+							<h4 class="text-section">Platform İçerİklerİ</h4>
+						</li>
+						<style>
+							.sub-item {
+								display: block; /* Tüm öğeleri blok olarak hizalar */
+								text-align: left; /* Metni sola hizalar */
+								padding-left: 10px; /* Sol taraftan biraz boşluk bırakır */
+							}
+						  
+							.nav-item .nav-collapse li {
+								list-style: none; /* Liste işaretlerini kaldırır */
+								margin-left: 0; /* Sol taraftan herhangi bir boşluk bırakmaz */
+								padding-left: 10px; /* Sol boşluk ekler */
+								text-align: left; /* Metinleri sola hizalar */
+							}
+						  
+							.nav-collapse {
+								padding-left: 0; /* Sol boşluğu sıfırlar */
+								margin-left: 0; /* Soldan tüm margin'leri kaldırır */
+								text-align: left; /* Tüm metni sola hizalar */
+							}
+						  </style>
+						  
+						  <li class="nav-item active submenu">
+							<a data-bs-toggle="collapse" href="#base">
+							  <i class="fas fa-chart-bar"></i>
+							  <p>Analiz Araçlarımız</p>
+							  <span class="caret"></span>
+							</a>
+							<div class="collapse show" id="base">
+							  <ul class="nav nav-collapse">
+								<li class="active">
+								  <a href="../components/viewshed.html">
+									<span class="sub-item">Görünürlük (Viewshed) Analizi</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../components/lineofsight.html">
+									<span class="sub-item">İki Nokta Arası Görünürlük (Line of Sight) Analizi</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../components/buffer.html">
+									<span class="sub-item">Tampon (Buffer) Analizi</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../components/overlay.html">
+									<span class="sub-item">Çakışma (Overlay) Analizi</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../components/slope.html">
+									<span class="sub-item">Eğim/Bakı (Slope/Aspect) Analizi</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../components/excavation.html">
+									<span class="sub-item">Kazı/Dolgu (Excavation/Fill) Analizi</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../components/solar.html">
+									<span class="sub-item">Güneş/Gölge (Solar/Shadow) Analizi</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../components/transport.html">
+									<span class="sub-item">Ulaşım/Navigasyon (Network/Navigation) Analizi</span>
+								  </a>
+								</li>
+							  </ul>
+							</div>
+						  </li>
+						  <li class="nav-item">
+							<a data-bs-toggle="collapse" href="#tool">
+							  <i class="fas fa-cog"></i>
+							  <p>WebCBS Araçlarımız</p>
+							  <span class="caret"></span>
+							</a>
+							<div class="collapse" id="tool">
+							  <ul class="nav nav-collapse">
+								<li>
+									<a href="../components/coordinatetool.html">
+									  <span class="sub-item">Koordinat & Dönüşüm Araçları</span>
+									</a>
+								  </li>
+								  <li>
+									<a href="../components/basictools.html">
+									  <span class="sub-item">Alan, Mesafe ve Poligon Ölçü Araçları</span>
+									</a>
+								  </li>
+								  <li>
+									<a href="../components/anglemeasurer.html">
+									  <span class="sub-item">Açı Hesaplama Araçları</span>
+									</a>
+								  </li>
+								  <li>
+									<a href="../components/owndata.html">
+									  <span class="sub-item">Kendi Verinizi Ekleyin/Görüntüleyin</span>
+									</a>
+								  </li>
+								  <li>
+									<a href="../components/attributetable.html">
+									  <span class="sub-item">Varlık/Öznitelik (Entity/Attribute) Tablosu Oluşturma/Kaydetme</span>
+									</a>
+								  </li>
+							  </ul>
+							</div>
+						  </li>
+			
+						  <li class="nav-item">
+							<a data-bs-toggle="collapse" href="#tables">
+							  <i class="fas fa-layer-group"></i>
+							  <p>Veri Katmanları</p>
+							  <span class="caret"></span>
+							</a>
+							<div class="collapse" id="tables">
+							  <ul class="nav nav-collapse">
+								<li>
+								  <a href="../layers/ayazagadtm.html">
+									<span class="sub-item">İTÜ Ayazağa DTM</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../layers/ayazagaortofoto.html">
+									<span class="sub-item">İTÜ Ayazağa Ortofoto</span>
+								  </a>
+								</li>
+								<li>
+								  <a href="../layers/ituassets.html">
+									<span class="sub-item">İTÜ Ayazağa Obje Modelleri</span>
+								  </a>
+								</li>
+							  </ul>
+							</div>
+						  </li>
+						  <li class="nav-item">
+							<a href="../components/digitaltwin.html">
+							  <i class="fas fa-building"></i>
+							  <p>Entegre Dijital İkiz Örneği</p>
+							</a>
+						  </li>
+						  <li class="nav-item">
+							<a href="../cesium/cesium.html">
+							  <i class="fas fa-globe"></i>
+							  <p>Cesium</p>
+							</a>
+						  </li>
+						  <li class="nav-item">
+							<a href="/forms.html">
+							  <i class="fas fa-pen-square"></i>
+							  <p>Bize Ulaşın</p>
+							</a>
+						  </li>
+				</div>
+			</div>
+		</div>
+		<!-- End Sidebar -->
+
+		<div class="main-panel">
+			<div class="main-header">
+				<div class="main-header-logo">
+					<!-- Logo Header -->
+					<div class="logo-header" data-background-color="dark">
+
+						<a href="../index.html" class="logo">
+							<img src="../assets/img/kaiadmin/logo_light.svg" alt="navbar brand" class="navbar-brand" height="20">
+						</a>
+						<div class="nav-toggle">
+							<button class="btn btn-toggle toggle-sidebar">
+								<i class="gg-menu-right"></i>
+							</button>
+							<button class="btn btn-toggle sidenav-toggler">
+								<i class="gg-menu-left"></i>
+							</button>
+						</div>
+						<button class="topbar-toggler more">
+							<i class="gg-more-vertical-alt"></i>
+						</button>
+
+					</div>
+					<!-- End Logo Header -->
+				</div>
+				<!-- Navbar Header -->
+				 
+				<nav>
+				   <div class="container-fluid">
+					<nav class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex">
+					  <ul class="navbar-nav w-100 d-flex align-items-center justify-content-between">
+						<li class="nav-item d-flex align-items-center" style="margin-left: 10px; margin-top: 13px;">
+							  <a href="mailto:bilgi@uakim.itu.edu.tr">bilgi@uakim.itu.edu.tr</a>
+						  </li>
+						  <li class="nav-item d-flex align-items-center" style="margin-right: 10px; margin-top: 13px;">
+							  <a> © İTÜ Geomatik Mühendisliği, 2024</a>
+							</li>
+						  </ul>
+					  </nav>
+				  </div>
+				</nav>
+	  
+				<style>
+				  .navbar-nav {
+					  height: 100%;
+				  }
+				  .nav-item {
+					  display: flex;
+					  align-items: center;
+				  }
+				  .nav-item a {
+					  display: inline-block;
+					  text-align: center;
+					  padding: 0.5rem;
+				  }
+				  .navbar {
+					  display: flex;
+					  align-items: center;
+					  height: 100%; /* Dikey ortalama */
+				  }
+			  </style>
+	  
+				<!-- End Navbar -->
+			  </div>
+			
+			  <div class="container">
+				<div class="page-inner">
+				  <div class="row">
+					<div class="row">
+					  <div class="col-md-12">
+						<div class="card card-round">
+						  <div class="card-header">
+							<div class="card-head-row card-tools-still-right">
+							  <h4 class="card-title">Görünürlük Analizi (Viewshed Analysis)</h4>
+							  <div class="card-tools">
+								<!-- <button -->
+								  <!-- class="btn btn-icon btn-link btn-primary btn-xs" -->
+								<!-- > -->
+								  <!-- <span class="fa fa-angle-down"></span> -->
+								<!-- </button> -->
+								<!-- <button -->
+								  <!-- class="btn btn-icon btn-link btn-primary btn-xs btn-refresh-card" -->
+								<!-- > -->
+								  <!-- <span class="fa fa-sync-alt"></span> -->
+								<!-- </button> -->
+								<!-- <button -->
+								  <!-- class="btn btn-icon btn-link btn-primary btn-xs" -->
+								<!-- > -->
+								  <!-- <span class="fa fa-times"></span> -->
+								<!-- </button> -->
+							  </div>
+							</div>
+						  </div>
+						  <div class="card-body">
+							<div class="row">
+							  <div class="col-md-12">
+								<div class="embed-container">
+								  <iframe
+									src="../cesium/cesiumviewshed.html"
+									style="width: 100%; height: 600px; border: none;"
+								  ></iframe>
+								</div>
+							  </div>
+							</div>
+						  </div>
+						  
+						  <style>
+							.embed-container {
+							  width: 100%;
+							  height: 100%;
+							  border: 1px solid #ccc;
+							  background-color: #f9f9f9;
+							  display: flex;
+							  align-items: center;
+							  justify-content: center;
+							}
+						  </style>
+						</div>
+					  </div>
+					</div>
+	  
+					<div class="row">
+					  <div class="col-md-12">
+						<div class="card card-round">
+						  <div class="card-header">
+							<div class="card-head-row card-tools-still-right">
+							  <h3 class="card-title">Görünürlük Analizi Nedir?</h3>
+							</div>
+						  </div>
+						  <div class="card-body">
+							<div class="content">
+							  <div class="column">
+								<p class="card-category">
+								  
+Tabii, görünürlük analizi (viewshed analysis) için metni şu şekilde düzeltebiliriz:
+
+Görünürlük Analizi (Viewshed Analysis), Coğrafi Bilgi Sistemleri (CBS) uygulamalarında yaygın olarak kullanılan, mekânsal verilerle ilgili birçok kritik soruya yanıt verebilen bir analiz yöntemidir. Bu analiz türü, belirli bir nokta etrafında, gözlem noktasından bakıldığında görülebilen alanları belirlemek için kullanılır. Görünürlük analizi, arazi yüzeyindeki yükseklik değişikliklerini dikkate alarak, gözlem noktasından görülebilen tüm alanları tanımlar.
+								</p>
+								<p class="card-category">
+									Görünürlük analizinin temel amacı, belirli bir gözlem noktasından belirli bir görüş alanı içinde görülebilen bölgeleri belirlemektir. Örneğin, bir tepe noktasından çevredeki alanları analiz ederek hangi bölgelerin bu tepe noktasından görülebilir olduğunu belirlemek mümkündür.
+								</p>
+								<br>
+								<ul>
+								  <li>Acil Durum ve Afet Yönetimi: Yangın gözetleme kuleleri ve acil durum yönetimi merkezleri için etkili görüş alanlarının belirlenmesi için kullanılır.</li>
+								  <li>Kentsel Planlama ve Altyapı: Yüksek binaların ve iletişim kulelerinin optimum yerleşim yerlerinin belirlenmesi amacıyla kullanılır.</li>
+								  <li>Askeri ve Güvenlik Uygulamaları: Gözetleme noktalarının ve savunma sistemlerinin stratejik yerlerinin belirlenmesini mümkün kılar.</li>
+								  <li>Turizm ve Rekreasyon: Manzara açısından değerli bölgelerin belirlenmesi ve turistik yönlendirmeler yapılması için kullanılabilir.</li>
+								  <li>Doğal Kaynak Yönetimi: Arazi yönetimi ve doğal kaynakların izlenmesi için stratejik gözlem noktalarının yerleştirilmesinde kullanılabilir.</li>
+								</ul>
+								<p class="card-category">
+								  Görünürlük analizi örneğimizin kaynak koduna <a href="https://sandcastle.cesium.com/#c=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" target="_blank" >buradan</a> ulaşabilirsiniz.
+								</p>
+							  </div>
+							</div>
+						  </div>
+						</div>
+					  </div>
+					</div>
+					
+					
+				  
+				  <style>
+					.card-body {
+					  padding: 20px;
+					}
+				  
+					.content {
+					  display: flex;
+					  justify-content: space-between;
+					  align-items: flex-start;
+					}
+				  
+					.left-column {
+					  width: 55%;
+					  padding-left: 0px; /* Sol hizalama ayarı */
+					}
+				  
+					.right-column {
+					  width: 40%;
+					  padding-left: 20px; /* Görsel için sol hizalama */
+					}
+				  
+					.embed-container {
+					  width: 100%;
+					  height: 100%;
+					  border: 1px solid #ccc;
+					  background-color: #f9f9f9;
+					  display: flex;
+					  align-items: center;
+					  justify-content: center;
+					}
+				  
+					.embed-container img {
+					  max-width: 100%;
+					  height: auto;
+					}
+				  
+					.section-title {
+					  font-size: 1.3em; /* Başlık büyüklüğü ayarlandı */
+					  margin-bottom: 10px;
+					  color: inherit; /* Başlık rengi uyumu için */
+					  text-align: left; /* Sola hizalama */
+					}
+				  
+					.card-category {
+					  padding: 10px;
+					  margin: 0;
+					  text-align: left; /* Sola hizalama */
+					  color: #333; /* Metin rengini koyulaştırmak için */
+					  padding-left: 0px; /* Metin sola hizalama */
+					}
+				  </style>
+				  
+				  
+				  </div>
+	  
+	  
+				  
+				</div>
+			  </div>
+			
+			  <footer class="footer">
+				<div class="container-fluid d-flex justify-content-between">
+				  <nav class="pull-left">
+					<ul class="nav">
+					  <li class="nav-item">
+						<a class="nav-link" target="_blank" href="https://geomatik.itu.edu.tr/">
+						  İTÜ Geomatik Mühendisliği
+						</a>
+					  </li>
+					  <li class="nav-item">
+						<a class="nav-link" target="_blank" href="https://uakim.itu.edu.tr/"> İTÜ AKİM </a>
+					  </li>
+					  <li class="nav-item">
+						<a class="nav-link" target="_blank" href="https://www.google.com/maps/dir//Re%C5%9Fitpa%C5%9Fa,+%C4%B0T%C3%9C+Geomatik+M%C3%BChendisli%C4%9Fi+B%C3%B6l%C3%BCm%C3%BC,+Sar%C4%B1yer+Cd.,+34469+Sar%C4%B1yer%2F%C4%B0stanbul/@41.1046344,29.0184864,18.75z/data=!4m17!1m7!3m6!1s0x14cab5c33bdda89f:0xbbfb5ddcbc1981a6!2zxLBUw5wgR2VvbWF0aWsgTcO8aGVuZGlzbGnEn2kgQsO2bMO8bcO8!8m2!3d41.104487!4d29.018748!16s%2Fg%2F11ckgldqyj!4m8!1m0!1m5!1m1!1s0x14cab5c33bdda89f:0xbbfb5ddcbc1981a6!2m2!1d29.018748!2d41.104487!3e2?entry=ttu"> Yol Tarifi Al </a>
+					  </li>
+					</ul>
+				  </nav>
+				  <div class="copyright">
+					<a target="_blank" href="https://gis.itu.edu.tr/">İTÜ Ulusal Coğrafi Bilgi Teknolojileri İnovasyon Uygulama-Araştırma Merkezi (UCBTiM) </a>
+				  </div>
+				  <div>
+					<a target="_blank" href="https://www.akillisehirler.gov.tr/">Akıllı Şehirler Portalı</a>
+				  </div>
+				</div>
+			  </footer>
+			</div>
+	</div>
+	<!--   Core JS Files   -->
+	<script src="../assets/js/core/jquery-3.7.1.min.js"></script>
+	<script src="../assets/js/core/popper.min.js"></script>
+	<script src="../assets/js/core/bootstrap.min.js"></script>
+	
+	<!-- jQuery Scrollbar -->
+	<script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+	<!-- Moment JS -->
+	<script src="../assets/js/plugin/moment/moment.min.js"></script>
+
+	<!-- Chart JS -->
+	<script src="../assets/js/plugin/chart.js/chart.min.js"></script>
+
+	<!-- jQuery Sparkline -->
+	<script src="../assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+
+	<!-- Chart Circle -->
+	<script src="../assets/js/plugin/chart-circle/circles.min.js"></script>
+
+	<!-- Datatables -->
+	<script src="../assets/js/plugin/datatables/datatables.min.js"></script>
+
+	<!-- Bootstrap Notify -->
+	<script src="../assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+
+	<!-- jQuery Vector Maps -->
+	<script src="../assets/js/plugin/jsvectormap/jsvectormap.min.js"></script>
+	<script src="../assets/js/plugin/jsvectormap/world.js"></script>
+
+	<!-- Sweet Alert -->
+	<script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+
+	<!-- Kaiadmin JS -->
+	<script src="../assets/js/kaiadmin.min.js"></script>
+
+	<!-- Kaiadmin DEMO methods, don't include it in your project! -->
+	<script src="../assets/js/setting-demo2.js"></script>
+</body>
+</html>

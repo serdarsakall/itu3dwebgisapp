@@ -1,0 +1,3492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>İTÜ AKİM WebCBS Uygulaması</title>
+    <meta
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+      name="viewport"
+    />
+    <link
+      rel="icon"
+      href="assets/img/logos/ituakimfavicon.png"
+      type="image/x-icon"
+    />
+
+    <!--turf.js alan hesaplamaları için-->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf"></script>
+
+
+    <!-- Fonts and icons -->
+    <script src="assets/js/plugin/webfont/webfont.min.js"></script>
+    <script>
+      WebFont.load({
+        google: { families: ["Public Sans:300,400,500,600,700"] },
+        custom: {
+          families: [
+            "Font Awesome 5 Solid",
+            "Font Awesome 5 Regular",
+            "Font Awesome 5 Brands",
+            "simple-line-icons",
+          ],
+          urls: ["assets/css/fonts.min.css"],
+        },
+        active: function () {
+          sessionStorage.fonts = true;
+        },
+      });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="assets/css/plugins.min.css" />
+    <link rel="stylesheet" href="assets/css/kaiadmin.min.css" />
+  </head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+    }
+
+    .side-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50px;
+      height: 100%;
+      background-color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 15px;
+      z-index: 10;
+      border-right: 2px solid #dcdcdc; /* Added border for distinction */
+    }
+
+    .side-menu button {
+      width: 40px;
+      height: 40px;
+      margin: 5px 0;
+      background-color: #f8f8f8;
+      border: 1px solid black;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .side-menu button img {
+      width: 100%;
+      height: 100%;
+      filter: brightness(0); /* Ensures icon is completely black */
+    }
+
+/* Layer Panel Genel Ayarları */
+.layer-panel {
+  position: absolute;
+  top: 0;
+  left: 50px;
+  width: 0;
+  height: 100%;
+  background-color: white;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  z-index: 9;
+  border-left: 2px solid #dcdcdc; /* Sol kenar sınırı */
+  overflow-x: hidden; /* Yatay taşmayı engeller */
+  overflow-y: auto; /* Dikey taşma olursa scrollbar gösterir */
+  padding-bottom: 5px; /* En alt kısımda boşluk */
+}
+
+.layer-panel.open {
+  width: 315px; /* Panel açıldığında genişlik */
+}
+
+.layer-panel ul {
+  list-style: none;
+  padding: 20px;
+}
+
+.layer-panel li {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start; /* Alt menülerin hizalanması */
+  flex-direction: column; /* Menüler alt alta olacak */
+}
+
+.layer-panel li input {
+  margin-right: 10px;
+}
+/* Kaydırma Çubuğu Stil Ayarları */
+.layer-panel::-webkit-scrollbar {
+  width: 8px; /* Kaydırma çubuğu genişliği */
+}
+
+.layer-panel::-webkit-scrollbar-thumb {
+  background-color: #888; /* Kaydırma çubuğu rengi */
+  border-radius: 4px;
+}
+
+.layer-panel::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Üzerine gelindiğinde kaydırma çubuğu rengi */
+}
+
+.layer-panel::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Kaydırma çubuğu arka plan rengi */
+}
+
+/* Ana Collapsible Butonlar */
+.collapsible {
+  background-color: #e4e4e4;
+  color: black;
+  cursor: pointer;
+  padding: 10px;
+  width: 275px;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  border-radius: 5px;
+}
+
+.collapsible::after {
+  content: '\25BC'; /* Aşağı bakan üçgen */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Sub-Collapsible Butonlar */
+.sub-collapsible {
+  background-color: #e4e4e4;
+  color: black;
+  cursor: pointer;
+  padding: 8px;
+  width: 250px;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  border-radius: 5px;
+}
+
+.sub-collapsible::after {
+  content: '\25BC'; /* Aşağı bakan üçgen */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Main İçerik - Başlangıçta tamamen görünür */
+.main-content {
+  padding: 0;
+  max-height: none; /* Tamamen görünür */
+  overflow: auto; /* İçerik fazla olursa kaydırma çubuğu eklendi */
+  background-color: #f9f9f9;
+  width: 275px;
+  margin-top: 0;
+}
+
+/* Kaydırma Çubuğu Stil Ayarları */
+.main-content::-webkit-scrollbar {
+  width: 8px; /* Kaydırma çubuğu genişliği */
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background-color: #888; /* Kaydırma çubuğu rengi */
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Üzerine gelindiğinde kaydırma çubuğu rengi */
+}
+
+.main-content::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Kaydırma çubuğu arka plan rengi */
+}
+
+
+/* Ana İçerik */
+.content {
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  transition: max-height 0.3s ease-out;
+  width: 275px;
+  margin-top: 0;
+}
+
+.content.show {
+  max-height: none;
+  transition: max-height 0.3s ease-in;
+}
+
+/* Sub-Content */
+.sub-content {
+  padding: 0;
+  max-height: 0;
+  overflow-y: auto; /* Kaydırma çubuğu eklendi */
+  background-color: #f9f9f9;
+  transition: max-height 0.3s ease-out;
+  width: 250px; /* İçerik genişliği sub-collapsible ile uyumlu */
+  margin-top: 0;
+}
+
+.sub-content.show {
+  max-height: 200px; /* Sabit bir max-height verildi */
+  transition: max-height 0.3s ease-in;
+}
+
+/* Kaydırma Çubuğu Stil Ayarları */
+.sub-content::-webkit-scrollbar {
+  width: 8px; /* Kaydırma çubuğu genişliği */
+}
+
+.sub-content::-webkit-scrollbar-thumb {
+  background-color: #888; /* Kaydırma çubuğu rengi */
+  border-radius: 4px;
+}
+
+.sub-content::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Üzerine gelindiğinde kaydırma çubuğu rengi */
+}
+
+.sub-content::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Kaydırma çubuğu arka plan rengi */
+}
+
+
+/* Kaydırma Çubuğu Stil Ayarları */
+.content::-webkit-scrollbar {
+  width: 8px; /* Kaydırma çubuğu genişliği */
+}
+
+.content::-webkit-scrollbar-thumb {
+  background-color: #888; /* Kaydırma çubuğu rengi */
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Üzerine gelindiğinde kaydırma çubuğu rengi */
+}
+
+.content::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Kaydırma çubuğu arka plan rengi */
+}
+
+.content ul {
+  padding: 10px;
+  list-style-type: none;
+  margin: 0;
+}
+
+/* Varsayılan stil */
+.toggle-button {
+  background-color: #f0f0f0;
+  color: #000;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  cursor: pointer;
+  
+  /* Metin taşmasını kontrol et ve satır kaydır */
+  white-space: normal;    /* Satır kaydırmayı aç */
+  word-wrap: break-word;  /* Taşan kelimeleri yeni satıra kaydır */
+  word-break: normal;     /* Normal kelime kesme kuralı */
+  
+  /* Flexbox ile dikey ortalama */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;  /* Sola hizalama */
+  text-align: left;             /* Çok satırlı metni sola yasla */
+}
+
+/* Tıklanamaz olan butonlar için stil */
+.toggle-button:disabled,
+.toggle-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Aktif olan buton */
+.toggle-button.active {
+  background-color: green;
+  color: white;
+}
+
+/* Slider varsayılan olarak gizli */
+.slider {
+  display: none;
+}
+
+/* Toggle button aktifken slider görünür */
+.toggle-button.active + .slider {
+  display: block;
+}
+
+
+
+/* text-block Yapısı (collapsible ile aynı üst ve alt boşluklar) */
+.text-block {
+  background-color: #e4e4e4;
+  color: black;
+  padding: 10px;
+  width: 275px;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  border-radius: 5px;
+  margin-top: 10px; /* Collapsible ile aynı üst boşluk */
+  margin-bottom: 10px; /* Collapsible ile aynı alt boşluk */
+}
+
+/* Görünmez çerçeve */
+.text-block::before {
+  content: '';
+  border: 1px solid transparent; /* Görünmez çerçeve */
+  display: block;
+}
+
+/* Çift Bloklu Butonlar İçin Double Button Sınıfı */
+.double-button {
+  display: flex;
+  width: 275px; /* Buton genişliği */
+  border-radius: 5px; /* Köşe yuvarlama */
+}
+
+.double-button button {
+  flex: 1;
+  padding: 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background-color: #e4e4e4; /* Varsayılan arka plan rengi */
+  color: black; /* Varsayılan yazı rengi */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.double-button button:first-child {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+.double-button button:last-child {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.double-button button.active {
+  background-color: green; /* Aktif butonun arka plan rengi */
+  color: white; /* Aktif butonun yazı rengi */
+}
+
+/* Text Block ve Double Button Arasında Boşluk Ayarı */
+.text-block + .double-button {
+  margin-top: 10px;
+}
+
+    #coordinatesBar {
+      position: absolute;
+      bottom: 5px;
+      right: 110px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    #coordinateMode {
+      margin-right: 10px;
+    }
+
+    #coordinateValues {
+      margin: 0;
+    }
+
+    .cesium-viewer-toolbar {
+      right: 40px !important;
+    }
+
+    .cesium-viewer-fullscreenContainer {
+      top: 7.5px;
+      right: 7.5px;
+      z-index: 100;
+      margin: 0 !important;
+      background-color: rgba(42, 42, 42, 0.8); /* Fullscreen button style */
+      border: none;
+      height: 31.5px; /* coordinatesBar ile aynı yükseklikte */
+    }
+
+    #locationButton {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  z-index: 10;
+  background-color: rgba(42, 42, 42, 0.8);
+  color: white;
+  padding: 0 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 27.5px; /* coordinatesBar ile aynı yükseklikte */
+}
+
+#coordinatesaverButton {
+  position: absolute;
+  bottom: 5px;
+  right: 57.5px;
+  z-index: 10;
+  background-color: rgba(42, 42, 42, 0.8);
+  color: white;
+  padding: 0 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 27.5px; /* coordinatesBar ile aynı yükseklikte */
+}
+
+    .cesium-viewer-animationContainer {
+      display: none !important;
+    }
+    
+  </style>
+</head>
+<body>
+  
+  <div id="cesiumContainer"></div>
+  
+  <!-- Left Side Menu -->
+  <div class="side-menu">
+    <button id="iconLayers" class="menu-button" title="Katmanlar" alt="Katmanlar">
+      <i class="fas fa-layer-group"></i>
+    </button>
+    <button id="analysisButton" class="menu-button" title="CBS Araçlarımız" alt="CBS Araçlarımız">
+      <i class="fas fa-chart-bar"></i>
+    </button>
+    <button id="databaseButton" class="menu-button" title="Veri Tabanı İşlemleri" alt="Veri Tabanı İşlemleri">
+      <i class="fas fa-database"></i>
+    </button>
+    <button id="settingsButton" class="menu-button" title="Ayarlar" alt="Ayarlar">
+      <i class="fas fa-cog"></i>
+    </button>
+  </div>
+
+  <!-- Layer Panel -->
+  <div id="layerPanel" class="layer-panel">
+    <ul>
+      <li>
+        <button class="collapsible">Uydu Görüntüleri</button>
+        <div class="content">
+          <ul>
+            <li><button class="toggle-button" id="toggleOrtofoto">İTÜ Ayazağa Ortofoto</button></li>
+            <input type="range" id="ituOrtofotoSlider" class="slider" min="0" max="1" step="0.01" value="1" />
+
+            <li><button class="toggle-button" id="toggleBingMapsAerial">Bing Maps Aerial (Varsayılan Altlık)</button></li>
+
+            <li><button class="toggle-button" id="toggleBingMapsLabels">Bing Maps Aerial with Labels</button></li>
+            <input type="range" id="BingMapsLabelsSlider" class="slider" min="0" max="1" step="0.01" value="1" />
+
+            <li><button class="toggle-button" id="toggleBingMapsRoad">Bing Maps Road</button></li>
+            <input type="range" id="BingMapsRoadSlider" class="slider" min="0" max="1" step="0.01" value="1" />
+
+            <li><button class="toggle-button" id="toggleBingMapsLabelsOnly">Bing Maps Labels Only</button></li>
+            <input type="range" id="BingMapsLabelsOnlySlider" class="slider" min="0" max="1" step="0.01" value="1" />
+
+            <li><button class="toggle-button" id="toggleSentinel2">Sentinel-2</button></li>
+            <input type="range" id="Sentinel2Slider" class="slider" min="0" max="1" step="0.01" value="1" />
+            <hr>
+            <li><button class="toggle-button" id="toggleDoubleSlider">Çift Altlık Görüntüle</button></li>
+          </ul>
+        </div>
+      </li>
+
+      <li>
+        <button class="collapsible">Dijital Arazi Modelleri</button>
+        <div class="content">
+          <ul>
+            <li><button class="toggle-button" id="toggleITUDTM">İTÜ Ayazağa DTM</button></li>
+            <li><button class="toggle-button" id="toggleCWT">Cesium World Terrain (Varsayılan Altlık)</button></li>
+          </ul>
+        </div>
+      </li>
+  
+      <li>
+        <button class="collapsible">CORINE Arazi Kullanımı</button>
+        <div class="content">
+          <ul>
+            <li>
+              <button class="sub-collapsible">Yapay Bölgeler</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleCorine1">1. Yapay Bölgeler</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine1.1">1.1. Şehir Yapısı</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.2">1.2. Endüstri, Ticaret ve Ulaşım Birimleri</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.3">1.3. Maden Ocağı, Boşaltım ve İnşaat Sahaları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.4">1.4. Yapay, Tarımsal Olmayan Yeşil Alanlar</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine1.1.1">1.1.1. Sürekli Şehir Yapısı</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.1.2">1.1.2. Kesikli/Süreksiz Şehir Yapısı</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.2.1">1.2.1. Endüstriyel Ve Ticari Birimler</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.2.2">1.2.2. Karayolları, Demiryolları ve İlgili Alanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.2.3">1.2.3. Limanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.2.4">1.2.4. Havaalanları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.3.1">1.3.1. Maden Çıkarım Sahaları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.3.2">1.3.2. Boşaltım Sahaları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.3.3">1.3.3. İnşaat Sahaları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.4.1">1.4.1. Yeşil Şehir Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine1.4.2">1.4.2. Spor ve Eğlence Alanları</button></li>
+                </ul>
+              </div>
+            </li>
+
+            <li>
+              <button class="sub-collapsible">Tarımsal Alanlar</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleCorine2">2. Tarımsal Alanlar</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine2.1">2.1. Ekilebilir Alan</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.2">2.2. Sürekli Ürünler</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.3">2.3. Meralar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.4">2.4. Karışık Tarımsal Alanlar</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine2.1.1">2.1.1. Sulanmayan Ekilebilir Alan</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.1.2">2.1.2. Sürekli Sulanan Alanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.1.3">2.1.3. Pirinç Tarlaları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.2.1">2.2.1. Üzüm Bağları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.2.2">2.2.2. Meyve Bahçeleri</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.2.3">2.2.3. Zeytinlikler</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.3.1">2.3.1. Mera Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.4.1">2.4.1. Sürekli Ürünlerle Birlikte Bulunan Senelik Ürünler</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.4.2">2.4.2. Karışık Tarım Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.4.3">2.4.3. Doğal Bitki Örtüsü ile Birlikte Bulunan Tarım Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine2.4.4">2.4.4. Ormanla Karışık Tarım Alanları</button></li>
+                </ul>
+              </div>
+            </li>
+
+            <li>
+              <button class="sub-collapsible">Orman ve Yarı Doğal Alanlar</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleCorine3">3. Orman ve Yarı Doğal Alanlar</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine3.1">3.1. Ormanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.2">3.2. Maki ve Otsu Bitkiler</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.3">3.3. Bitki Örtüsü ile Kaplı Olmayan veya Az Miktarda Bitki Örtüsü İle Kaplı Açık Alanlar</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine3.1.1">3.1.1. Geniş Yapraklı Ormanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.1.2">3.1.2. İğne Yapraklı Ormanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.1.3">3.1.3. Karışık Ormanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.2.1">3.2.1. Doğal Çayırlıklar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.2.2">3.2.2. Fundalıklar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.2.3">3.2.3. Sklerofil Bitki Örtüsü</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.2.4">3.2.4. Bitki Değişim Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.3.1">3.3.1. Sahiller, Kumsallar ve Kumluklar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.3.2">3.3.2. Çıplak Kayalıklar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.3.3">3.3.3. Seyrek Bitki Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.3.4">3.3.4. Yanmış Alanlar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine3.3.5">3.3.5. Buzul ve Kalıcı Kar</button></li>
+                </ul>
+              </div>
+            </li>
+
+            <li>
+              <button class="sub-collapsible">Sulak Alanlar</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleCorine4">4. Sulak Alanlar</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine4.1">4.1. Karasal Bataklıklar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine4.2">4.2. Denize Yakın Islak Alanlar</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine4.1.1">4.1.1. Karasal Bataklıklar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine4.1.2">4.1.2. Turbalıklar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine4.2.1">4.2.1. Tuz Bataklığı</button></li>
+                  <li><button class="toggle-button" id="toggleCorine4.2.2">4.2.2. Tuzlalar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine4.2.3">4.2.3. Gelgit Olayı İle Oluşan Düzlükler</button></li>
+                </ul>
+              </div>
+            </li>
+
+            <li>
+              <button class="sub-collapsible">Su Yapıları</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleCorine5">5. Su Yapıları</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine5.1">5.1. Karasal/İç Sular</button></li>
+                  <li><button class="toggle-button" id="toggleCorine5.2">5.2. Deniz Suları</button></li>
+                  <hr>
+                  <li><button class="toggle-button" id="toggleCorine5.1.1">5.1.1. Su Yolları</button></li>
+                  <li><button class="toggle-button" id="toggleCorine5.1.2">5.1.2. Su Kütleleri</button></li>
+                  <li><button class="toggle-button" id="toggleCorine5.2.1">5.2.1. Kıyı Lagünleri</button></li>
+                  <li><button class="toggle-button" id="toggleCorine5.2.2">5.2.2. Nehir Ağızları, Deltalar</button></li>
+                  <li><button class="toggle-button" id="toggleCorine5.2.3">5.2.3. Deniz ve Okyanus</button></li>
+                </ul>
+              </div>
+            </li>
+
+          </ul>
+        </div>
+      </li>
+  
+      <li>
+        <button class="collapsible">3D Yapı Katmanı</button>
+        <div class="content">
+          <ul>
+            <li><button class="toggle-button" id="toggleOSMBuildings">Cesium OSM Buildings</button></li>
+            <li><button class="toggle-button" id="toggleFakulteler">Fakülteler</button></li>
+            <li><button class="toggle-button" id="toggleDerslikBinalari">Derslik Binaları</button></li>
+            <li><button class="toggle-button" id="toggleYemekhaneler">Yemekhaneler</button></li>
+            <li><button class="toggle-button" id="toggleYemeIcmeAlanlari">Yeme-İçme Alanları</button></li>
+            <li><button class="toggle-button" id="toggleGirisKapilari">Giriş Kapıları</button></li>
+            <li><button class="toggle-button" id="toggleOgrenciYurtlari">Öğrenci Yurtları</button></li>
+            <li><button class="toggle-button" id="toggleTeknokentBinalari">Teknokent Binaları</button></li>
+            <li><button class="toggle-button" id="toggleDiniYapilar">Dini Yapılar</button></li>
+            <li><button class="toggle-button" id="toggleInsaatTamamlanmamisYapilar">İnşaat Süreci Tamamlanmamış Yapılar</button></li>
+            <li><button class="toggle-button" id="toggleMuzeler">Müzeler</button></li>
+            <li><button class="toggle-button" id="toggleOfisIsyeri">Ofis/İşyeri</button></li>
+            <li><button class="toggle-button" id="toggleResmiBinalar">Resmi Binalar</button></li>
+            <li><button class="toggle-button" id="toggleSaglikBirimleri">Sağlık Birimleri</button></li>
+            <li><button class="toggle-button" id="toggleTeknikYapilar">Teknik Yapılar</button></li>
+            <li><button class="toggle-button" id="toggleDijitalIkiziBinalar">Entegre Dijital İkizi Tamamlanmış Binalar</button></li>            
+          </ul>
+        </div>
+      </li>
+  
+      <li>
+        <button class="collapsible">Ulaşım Ağı</button>
+        <div class="content">
+          <ul>
+            <li><button class="toggle-button" id="toggleAnaArter">Ana Arter</button></li>
+            <li><button class="toggle-button" id="toggleAracYolu">Araç Yolu</button></li>
+            <li><button class="toggle-button" id="toggleYayaYolu">Yaya Yolu</button></li>
+            <li><button class="toggle-button" id="togglePaylasimliYol">Paylaşımlı Yol</button></li>
+            <li><button class="toggle-button" id="toggleBisikletYolu">Bisiklet Yolu</button></li>
+          </ul>
+        </div>
+      </li>
+  
+      <li>
+        <button class="collapsible">Altyapı Ağı</button>
+        <div class="content">
+          <ul>
+            <li><button class="toggle-button" id="toggleAtikSu">Atık Su</button></li>
+            <li><button class="toggle-button" id="toggleDogalgaz">Doğalgaz</button></li>
+            <li><button class="toggle-button" id="toggleFiberKablo">Fiber Kablo</button></li>
+            <li><button class="toggle-button" id="toggleElektrikKablo">Elektrik Kablo</button></li>
+            <li><button class="toggle-button" id="toggleIcmeSuyu">İçme Suyu</button></li>
+            <li><button class="toggle-button" id="toggleIsitma">Isıtma</button></li>
+            <li><button class="toggle-button" id="toggleSulama">Sulama</button></li>
+            <li><button class="toggle-button" id="toggleYagmurSuyu">Yağmur Suyu</button></li>
+          </ul>
+        </div>
+      </li>
+  
+      <li>
+        <button class="collapsible">POI’ler</button>
+        <div class="content">
+          <ul>
+            <li>
+              <button class="sub-collapsible">Üst Yapı</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleRingDuraklari">Ring Durakları</button></li>
+                  <li><button class="toggle-button" id="toggleReklamPanolari">Reklam Panoları</button></li>
+                  <li><button class="toggle-button" id="toggleAgaclar">Ağaçlar</button></li>
+                  <li><button class="toggle-button" id="toggleBazIstasyonlari">Baz İstasyonları</button></li>
+                  <li><button class="toggle-button" id="toggleHeykeller">Heykeller</button></li>
+                  <li><button class="toggle-button" id="toggleATMler">ATM’ler</button></li>
+                  <li><button class="toggle-button" id="toggleMarketler">Marketler</button></li>
+                  <li><button class="toggle-button" id="toggleKafeler">Kafeler</button></li>
+                  <li><button class="toggle-button" id="toggleRestoranlar">Restoranlar</button></li>
+                  <li><button class="toggle-button" id="toggleKirtasiyeler">Kırtasiyeler</button></li>
+                  <li><button class="toggle-button" id="toggleGuvenlikKameralari">Güvenlik Kameraları</button></li>
+                </ul>
+              </div>
+            </li>
+            <li>
+              <button class="sub-collapsible">Alt Yapı</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleRogarKapaklari">Rögar Kapakları</button></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </li>
+      
+      
+      
+      <li>
+        <button class="collapsible">Kadastro</button>
+        <div class="content">
+          <ul>
+            <li>
+              <button class="sub-collapsible">Kadastral Bilgiler</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleAdaNo">Ada Numaraları</button></li>
+                  <li><button class="toggle-button" id="toggleParselNo">Parsel Numaraları</button></li>
+                  <li><button class="toggle-button" id="toggleParselSinirlari">Parsel Sınırları</button></li>
+                </ul>
+              </div>
+            </li>
+      
+            <li>
+              <button class="sub-collapsible">Yapı Türüne Göre Sınıflandırma</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleKamuYapilari">Kamu Yapıları</button></li>
+                  <li><button class="toggle-button" id="toggleOzelYapilar">Özel Yapılar</button></li>
+                  <li><button class="toggle-button" id="toggleDigerYapilar">Diğer Yapılar</button></li>
+                </ul>
+              </div>
+            </li>
+      
+            <li>
+              <button class="sub-collapsible">Özel Durumlarına Göre Sınıflandırma</button>
+              <div class="sub-content">
+                <ul>
+                  <li><button class="toggle-button" id="toggleSporAlanlari">Spor Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleOrtakKullanimAlanlari">Ortak Kullanım Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleEgitimAmacliKullanimAlanlari">Eğitim Amaçlı Kullanım Alanları</button></li>
+                  <li><button class="toggle-button" id="toggleAracTrafikKapaliKullanimAlanlari">Araç Trafiğine Kapalı Kullanım Alanları</button></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </li>      
+    </ul>
+  </div>
+
+ <!-- WebGIS Layer Panel -->
+ <div id="analysisLayerPanel" class="layer-panel">
+  <ul>
+    <li>
+      <button class="collapsible">Analiz Araçlarımız</button>
+      <div class="content">
+        <ul>
+          <li>
+            <button class="sub-collapsible">Tampon Bölge Oluşturma Araçları</button>
+            <div class="sub-content">
+              <ul>
+                <li><button class="toggle-button" id="togglePointBuffer">Nokta Tampon Analizi</button></li>
+                <li><button class="toggle-button" id="toggleLineBuffer">Çizgi Tampon Analizi</button></li>
+                <li><button class="toggle-button" id="togglePolygonBuffer">Poligon Tampon Analizi</button></li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <button class="sub-collapsible">Görünürlük Analiz Araçları</button>
+            <div class="sub-content">
+              <ul>
+                <li><button class="toggle-button" id="toggleViewshed">Görüş Alanı Analizi</button></li>
+                <li><button class="toggle-button" id="toggleLineofSight">Görüş Hattı Analizi</button></li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <button class="sub-collapsible">Örtüşme Analiz Araçları</button>
+            <div class="sub-content">
+              <ul>
+                <li><button class="toggle-button" id="toggleDifference">Fark Araçları</button></li>
+                <li><button class="toggle-button" id="toggleIntersection">Kesişim Aracı</button></li>
+                <li><button class="toggle-button" id="toggleUnion">Birleştirme Aracı</button></li>
+                <li><button class="toggle-button" id="toggleClip">Kesme Aracı</button></li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <button class="sub-collapsible">Topoğrafik Analiz Araçları</button>
+            <div class="sub-content">
+              <ul>
+                <li><button class="toggle-button" id="toggleFillCut">Kazı/Dolgu Analizi</button></li>
+                <li><button class="toggle-button" id="toggleSlope">Eğim Analizi</button></li>
+                <li><button class="toggle-button" id="toggleAspect">Bakı Analizi</button></li>
+                <li><button class="toggle-button" id="toggleProfile">Enkesit/Boykesit Aracı</button></li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </li>
+
+    <li>
+      <button class="collapsible">Çizim/Hesap Araçlarımız</button>
+      <div class="content">
+        <ul>
+          <li>
+            <button class="sub-collapsible">Çizim Araçlarımız</button>
+            <div class="sub-content">
+              <ul>
+                <li><button class="toggle-button" id="togglePoint">Nokta Oluştur</button></li>
+                <li><button class="toggle-button" id="toggleLine">Çizgi Oluştur</button></li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <button class="sub-collapsible">Hesap Araçlarımız</button>
+            <div class="sub-content">
+              <ul>
+                <li><button class="toggle-button" id="togglePolygonAngle">Poligon Açısı Hesapla</button></li>
+                <li><button class="toggle-button" id="toggleTraverseAngle">Açıklık Açısı Hesapla</button></li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <button class="sub-collapsible">Poligon/Alan Bazlı Araçlarımız</button>
+            <div class="sub-content">
+              <ul>
+                <li><button class="toggle-button" id="togglePolygon">Poligon Oluştur</button></li>
+                <li><button class="toggle-button" id="toggleVoronoi">Voronoi Bölgesi Oluştur</button></li>
+                <li><button class="toggle-button" id="toggleTriangulation">Üçgenleme Bölgesi Oluştur</button></li>
+                <hr>
+                <li><button class="toggle-button" id="toggleCircle">Daire Oluştur</button></li>
+                <li><button class="toggle-button" id="toggleRing">Çember Oluştur</button></li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div id="databaseLayerPanel" class="layer-panel">
+</div>
+
+<div id="settingsLayerPanel" class="layer-panel">
+  <!-- Uygulama Kullanım Modu -->
+  <div class="settings-option">
+    <span class="text-block">Uygulama Kullanım Modu:</span>
+    <div class="double-button">
+      <button id="lightModeButton" class="mode-button">Aydınlık</button>
+      <button id="darkModeButton" class="mode-button">Karanlık</button>
+    </div>
+  </div>
+
+  <!-- Nokta Koordinat Tercihi -->
+  <div class="settings-option">
+    <span class="text-block">Nokta Koordinat Tercihi:</span>
+    <div class="double-button">
+      <button id="cartesianButton" class="mode-button">Kartezyen</button>
+      <button id="geographicButton" class="mode-button">Coğrafi</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+  <!-- Coordinates Bar -->
+  <div id="coordinatesBar">
+    <select id="coordinateMode">
+      <option value="geographic">Coğrafi</option>
+      <option value="cartesian">Kartezyen</option>
+    </select>
+    <div id="coordinateValues"></div>
+  </div>
+
+<!-- Location Button -->
+<button id="locationButton" title="Konumu Göster">
+  <img src="assets/img/location-crosshairs-solid.svg" alt="Konum İkonu" style="width: 75%; height: 75%; object-fit: contain;">
+</button>
+
+<!-- Coordinate Saver Button -->
+<button id="coordinatesaverButton" title="Koordinat Yakalayıcı">
+  <img src="assets/img/circle-plus-solid.svg" alt="Koordinat Yakalayıcı" style="width: 75%; height: 75%; object-fit: contain;">
+</button>
+
+  <script type="module">
+Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+(async () => {
+  const viewer = new Cesium.Viewer("cesiumContainer", {
+    timeline: false,
+    baseLayerPicker: false,
+    terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+  });
+
+  viewer.scene.globe.depthTestAgainstTerrain = true;
+
+  let bingMapsAerialLayer = viewer.imageryLayers.addImageryProvider(
+    await Cesium.IonImageryProvider.fromAssetId(2)
+  );
+
+  let ortofotoLayer = viewer.imageryLayers.addImageryProvider(
+    await Cesium.IonImageryProvider.fromAssetId(2656561)
+  );
+
+  const tilesets = [
+    2654260, 2654259, 2654257, 2654256, 2654255, 2654253, 2654252, 2654251,
+    2654250, 2654249, 2654248, 2654246, 2654243, 2654241, 2654239, 2658263,
+    2658261, 2658258, 2658247, 2658239, 2658220, 2658205, 2658186, 2658080,
+    2658066, 2658057, 2657980, 2657979, 2657947, 2657944, 2657943, 2657806,
+    2657804, 2657802, 2657801, 2657799, 2657795, 2657793, 2657789, 2657788,
+    2657787, 2654283, 2654282, 2654281, 2654280, 2654279, 2654277, 2654276,
+    2654275, 2654274, 2654273, 2654271, 2654270, 2654269, 2654268, 2654267,
+    2654266, 2654265, 2654264, 2654262, 2654261,
+  ];
+
+  const tilesetPrimitives = await Promise.all(tilesets.map(async (assetId) => {
+    const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+    await tileset.readyPromise;
+    viewer.scene.primitives.add(tileset);
+    return tileset;
+  }));
+
+// Function to add toggle functionality for layers
+const addToggleFunctionality = async (buttonId, sliderId, assetId, defaultLayer = null) => {
+  let layer = defaultLayer; // Eğer layer başlangıçta eklendiyse bunu kullan
+  const button = document.getElementById(buttonId);
+  const slider = sliderId ? document.getElementById(sliderId) : null;
+
+  // Eğer layer varsayılan olarak eklenmişse butonu aktif yapalım
+  if (layer) {
+    button.classList.add('active');  // Buton başlangıçta aktif
+    if (slider) {
+      slider.style.display = 'block';  // Slider'ı göster
+      slider.value = layer.alpha || 1;  // Transparanlık değerini slider'a yükleyelim
+    }
+  }
+
+  // Butona tıklama event'ini ekleyelim
+  button.addEventListener('click', async function () {
+    if (!button.classList.contains('active')) {
+      // Buton inaktifse, layer'ı ekle ve butonu aktif yap
+      if (!layer) {  // Eğer layer yoksa ekleyelim
+        layer = viewer.imageryLayers.addImageryProvider(
+          await Cesium.IonImageryProvider.fromAssetId(assetId)
+        );
+      }
+      if (slider) {
+        layer.alpha = parseFloat(slider.value);  // Transparanlık değerini slider'dan al
+        slider.style.display = 'block';  // Slider'ı göster
+      }
+      button.classList.add('active');  // Butonu aktif yap
+      viewer.imageryLayers.raiseToTop(ortofotoLayer);  // Diğer layer'ları üste taşımak için
+    } else {
+      // Buton aktifse, layer'ı kaldır ve butonu inaktif yap
+      if (layer) {
+        viewer.imageryLayers.remove(layer);
+        layer = null;  // Layer'ı kaldırdıktan sonra null yap
+      }
+      button.classList.remove('active');  // Butonu inaktif yap
+      if (slider) slider.style.display = 'none';  // Slider'ı gizle
+    }
+
+    // Görsel değişikliklerin uygulandığından emin olmak için log ekleyelim
+    console.log(`${buttonId} - Active: ${button.classList.contains('active')}`);
+  });
+
+  // Slider input event'i ekleyelim (aktif katman varsa transparanlığı ayarlasın)
+  if (slider) {
+    slider.addEventListener('input', function () {
+      if (layer) {
+        layer.alpha = parseFloat(slider.value);  // Slider'dan transparanlık değerini ayarla
+      }
+    });
+  }
+
+  // Layer added event'i düzgün ayarlayalım
+  viewer.scene.imageryLayers.layerAdded.addEventListener(function (event) {
+    if (event.imageryProvider && event.imageryProvider.assetId === assetId) {
+      layer = event;
+    }
+  });
+
+  // Layer removed event'ini düzeltelim
+  viewer.scene.imageryLayers.layerRemoved.addEventListener(function (event) {
+    if (event.imageryProvider && event.imageryProvider.assetId === assetId) {
+      layer = null;
+    }
+  });
+};
+
+// Toggle functionality for imagery layers
+await addToggleFunctionality('toggleBingMapsLabels', 'BingMapsLabelsSlider', 3);
+await addToggleFunctionality('toggleBingMapsRoad', 'BingMapsRoadSlider', 4);
+await addToggleFunctionality('toggleBingMapsLabelsOnly', 'BingMapsLabelsOnlySlider', 2411391);
+await addToggleFunctionality('toggleBingMapsAerial', null, 2, bingMapsAerialLayer);
+await addToggleFunctionality('toggleSentinel2', 'Sentinel2Slider', 3954);
+await addToggleFunctionality('toggleOrtofoto', 'ituOrtofotoSlider', 2656561, ortofotoLayer);  // İTÜ Ortofoto başlangıçta aktif
+
+// İTÜ Ayazağa DTM ve Cesium World Terrain butonlarını başlangıçta aktif yapalım
+document.getElementById('toggleITUDTM').classList.add('active');
+document.getElementById('toggleCWT').classList.add('active');
+
+
+
+// toggleBingMapsAerial ve toggleCWT butonlarını tıklanamaz hale getirelim
+document.getElementById('toggleBingMapsAerial').setAttribute('disabled', 'disabled');
+document.getElementById('toggleCWT').setAttribute('disabled', 'disabled');
+document.getElementById('toggleITUDTM').setAttribute('disabled', 'disabled');
+
+
+
+
+  // Function to add toggle functionality for terrain layers
+const addTerrainToggleFunctionality = async (buttonId, assetId, defaultActive = false, defaultTerrain = null) => {
+  let terrain = defaultTerrain; // Eğer terrain başlangıçta eklendiyse bunu kullan
+  const button = document.getElementById(buttonId);
+
+  // Eğer defaultActive ise, butonu aktif yapalım
+  if (defaultActive) {
+    button.classList.add('active');
+    viewer.terrainProvider = terrain; // Varsayılan terrain'i yükle
+  }
+
+  // Butona tıklama event'ini ekleyelim
+  button.addEventListener('click', async function () {
+    button.classList.toggle('active');
+    if (button.classList.contains('active')) {
+      terrain = await Cesium.CesiumTerrainProvider.fromIonAssetId(assetId);
+      viewer.terrainProvider = terrain; // Terrain'i aktif yap
+    } else {
+      // Varsayılan düz zemin (EllipsoidTerrainProvider) kullan
+      viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+    }
+  });
+};
+
+// Toggle functionality for terrain layers
+await addTerrainToggleFunctionality('toggleITUDTM', 2656560); // İTÜ Ayazağa DTM
+await addTerrainToggleFunctionality('toggleCWT', 1);       // Cesium World Terrain
+
+
+// Toggle functionality for Cesium OSM Buildings
+let osmBuildingsLayer;
+const osmBuildingsButton = document.getElementById('toggleOSMBuildings');
+
+osmBuildingsButton.addEventListener('click', async function() {
+  osmBuildingsButton.classList.toggle('active');
+  if (osmBuildingsButton.classList.contains('active')) {
+    osmBuildingsLayer = await Cesium.Cesium3DTileset.fromIonAssetId(96188);
+    viewer.scene.primitives.add(osmBuildingsLayer);
+  } else {
+    viewer.scene.primitives.remove(osmBuildingsLayer);
+  }
+});
+
+
+
+      // Override the default Home button behavior
+      viewer.homeButton.viewModel.command.beforeExecute.addEventListener((event) => {
+        event.cancel = true;
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(29.0215, 41.1050, 3000),
+        });
+      });
+
+      viewer.camera.setView({
+  destination: Cesium.Cartesian3.fromDegrees(29.0215, 41.1050, 3000),
+});
+      viewer.scene.completeMorph();  // Varsayılan geçişi engeller ve anında yeni görünümü ayarlar
+
+
+      function updateGeographicCoordinates(cartographic) {
+    const lonDegrees = Cesium.Math.toDegrees(cartographic.longitude);
+    const latDegrees = Cesium.Math.toDegrees(cartographic.latitude);
+    
+    const lon = Math.abs(lonDegrees).toFixed(7);
+    const lat = Math.abs(latDegrees).toFixed(7);
+    
+    const lonDirection = lonDegrees >= 0 ? 'D' : 'B';
+    const latDirection = latDegrees >= 0 ? 'K' : 'G';
+    
+    const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+
+    return `Enlem ${lat}° ${latDirection}, Boylam: ${lon}° ${lonDirection}, Yükseklik: ${height}m`;
+}
+
+// Coordinate bar update function for Cartesian mode
+function updateCartesianCoordinates(cartographic) {
+    const cartesian = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height);
+    const x = cartesian.x.toFixed(4);
+    const y = cartesian.y.toFixed(4);
+    const z = cartesian.z.toFixed(4);
+    return `X: ${x} m, Y: ${y} m, Z: ${z} m`;
+}
+
+// Main function to update coordinates bar based on selected mode
+function updateCoordinatesBar(cartographic, mode) {
+    let coordinatesText;
+    if (mode === 'geographic') {
+        coordinatesText = updateGeographicCoordinates(cartographic);
+    } else if (mode === 'cartesian') {
+        coordinatesText = updateCartesianCoordinates(cartographic);
+    }
+    document.getElementById('coordinateValues').innerText = coordinatesText;
+}
+
+// Mouse move event listener for coordinates bar
+const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction((movement) => {
+    const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        const mode = document.getElementById('coordinateMode').value;
+        updateCoordinatesBar(cartographic, mode);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Dünya üzerindeki herhangi bir noktada olduğunuzdan emin olun.";
+    }
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+// Dropdown change event listener to update coordinates based on selected mode
+document.getElementById('coordinateMode').addEventListener('change', (event) => {
+    const cartesian = viewer.camera.pickEllipsoid(handler._lastMovement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        updateCoordinatesBar(cartographic, event.target.value);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Dünya üzerindeki herhangi bir noktada olduğunuzdan emin olun.";
+    }
+});
+
+///////////////////////////////////LOCATION BUTTON///////////////////////////////////////////////////
+
+// Konum butonuna tıklama olayı ekleyin
+document.getElementById('locationButton').addEventListener('click', function () {
+  // Kullanıcıdan onay almak için bir doğrulama penceresi göster
+  const userConfirmed = confirm('Konumunuzu paylaşmak istiyor musunuz?');
+
+  // Eğer kullanıcı onay verirse konum bilgisi talep et
+  if (userConfirmed) {
+    // Geolocation izni isteyin
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          // Mevcut konumda zaten bir nokta varsa, eskiyi kaldır
+          viewer.entities.removeAll();
+
+          // Kullanıcının konumunu temsil eden büyük mavi nokta ve açıklama
+          const bluePoint = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(longitude, latitude), // Yükseklik olmadan
+            point: {
+              pixelSize: 15, // Noktanın boyutunu büyüttük
+              color: Cesium.Color.BLUE, // Mavi renk
+              outlineColor: Cesium.Color.WHITE, // Beyaz kenarlık
+              outlineWidth: 3,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, // Araziye yapışacak şekilde ayarladık
+            },
+            label: {
+              text: 'Konumunuz', // Mavi noktanın üzerinde "Konumunuz" yazısı
+              font: '14pt sans-serif',
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM, // Noktanın üstüne yerleştirildi
+              pixelOffset: new Cesium.Cartesian2(0, -25), // Label'i hafif yukarı kaydırdık
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, // Label'i de araziye yapışacak şekilde ayarladık
+            },
+          });
+
+          // Kullanıcının konumuna dikey açıdan zoom yapın
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, 300), // 300m yükseklik
+            orientation: {
+              heading: Cesium.Math.toRadians(0),
+              pitch: Cesium.Math.toRadians(-90), // Dikey görünüm
+              roll: 0,
+            },
+            duration: 2.0, // Zoom animasyonu süresi
+          });
+        },
+        function (error) {
+          console.error('Konum alınırken hata: ', error);
+          alert('Konumunuza erişilemiyor.');
+        },
+        {
+          enableHighAccuracy: true,  // Yüksek doğruluk talebi
+          timeout: 10000,            // 10 saniyelik zaman aşımı
+          maximumAge: 0              // Eski konum verilerini kullanma
+        }
+      );
+    } else {
+      alert('Tarayıcınız konum hizmetlerini desteklemiyor.');
+    }
+  } else {
+    alert('Konum izni reddedildi.');
+  }
+});
+
+//////////////////////////////////////PANEL GÖRÜNÜRLÜKLERİ////////////////////////////////////////////////
+
+// Toggle layer-panel visibility
+const layerPanel = document.getElementById('layerPanel');
+document.getElementById('iconLayers').addEventListener('click', () => {
+  layerPanel.classList.toggle('open');
+});
+
+// Toggle analysis-layer-panel visibility
+const analysisLayerPanel = document.getElementById('analysisLayerPanel');
+document.getElementById('analysisButton').addEventListener('click', () => {
+  analysisLayerPanel.classList.toggle('open');
+});
+
+// Toggle settings-layer-panel visibility
+const databaseLayerPanel = document.getElementById('databaseLayerPanel');
+document.getElementById('databaseButton').addEventListener('click', () => {
+  databaseLayerPanel.classList.toggle('open');
+});
+
+// Toggle settings-layer-panel visibility
+const settingsLayerPanel = document.getElementById('settingsLayerPanel');
+document.getElementById('settingsButton').addEventListener('click', () => {
+  settingsLayerPanel.classList.toggle('open');
+});
+
+// Z-index management function to bring the clicked panel to the front
+let zIndexCounter = 1; // This counter will increase with each click
+
+function bringToFront(panel) {
+  zIndexCounter++;
+  panel.style.zIndex = zIndexCounter; // Set the z-index of the clicked panel to the highest value
+}
+
+// Enhanced behavior: bring the clicked panel to the front
+document.getElementById('iconLayers').addEventListener('click', () => {
+  bringToFront(layerPanel);
+});
+
+document.getElementById('analysisButton').addEventListener('click', () => {
+  bringToFront(analysisLayerPanel);
+});
+
+document.getElementById('databaseButton').addEventListener('click', () => {
+  bringToFront(databaseLayerPanel);
+});
+
+document.getElementById('settingsButton').addEventListener('click', () => {
+  bringToFront(settingsLayerPanel);
+});
+
+////////////////////////////////////COLLAPSIBLE & SUB-COLLAPSIBLE TIKLAMA YAPISI////////////////////////////////////////////
+
+// Ana collapsible butonlar
+var coll = document.querySelectorAll(".collapsible");
+
+// Sub-collapsible butonlar
+var subColl = document.querySelectorAll(".sub-collapsible");
+
+coll.forEach(function(button) {
+  button.addEventListener("click", function() {
+    // Butona tıklanınca aktif durumu değiştir
+    this.classList.toggle("active");
+
+    // İçerik elementini seç
+    var content = this.nextElementSibling;
+
+    // İçeriği aç/kapat
+    if (content.style.maxHeight) {
+      content.style.maxHeight = null;
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+    }
+  });
+});
+
+subColl.forEach(function(button) {
+  button.addEventListener("click", function() {
+    // Butona tıklanınca aktif durumu değiştir
+    this.classList.toggle("active");
+
+    // İçerik elementini seç
+    var subContent = this.nextElementSibling;
+    var parentContent = this.closest('.content'); // En yakın üst içerik alanını bul
+
+    // Sub-Content aç/kapat
+    if (subContent.style.maxHeight) {
+      subContent.style.maxHeight = null;
+    } else {
+      subContent.style.maxHeight = subContent.scrollHeight + "px"; // Sub-content'in gerçek yüksekliğini ayarla
+    }
+
+    // Parent content'in maxHeight'ini yeniden ayarla
+    if (parentContent) {
+      // Mevcut sub-content yüksekliği varsa onu da parent'a ekle
+      var totalHeight = Array.from(parentContent.querySelectorAll('.sub-content'))
+        .reduce((acc, sub) => acc + (sub.scrollHeight || 0), 0);
+      parentContent.style.maxHeight = (parentContent.scrollHeight + totalHeight) + "px";
+    }
+  });
+});
+
+document.querySelectorAll('.toggle-button').forEach(function(button) {
+  button.addEventListener('click', function() {
+    const slider = button.nextElementSibling;  // İlgili slider'ı bul
+
+    // Buton aktif mi kontrol et
+    if (button.classList.contains('active')) {
+      // Eğer aktifse, inaktif yap
+      button.classList.remove('active');
+      
+      // İlgili slider'ı gizle
+      if (slider && slider.classList.contains('slider')) {
+        slider.style.display = 'none';
+      }
+    } else {
+      // Eğer aktif değilse, aktif yap
+      button.classList.add('active');
+      
+      // İlgili slider'ı göster
+      if (slider && slider.classList.contains('slider')) {
+        slider.style.display = 'block';
+      }
+    }
+
+    // Fonksiyonun resetlenmesini engellemek için, başka işlevler eklenebilir
+    // Ancak mevcut işlevler resetlenmemesi için yukarıdaki toggle class mantığı yeterli olmalı
+  });
+});
+
+
+/////////////////////////////////////TAMPON ANALİZİ ALTYAPISI/////////////////////////////////////////////////
+
+
+// Renk paleti
+const bufferColors = [
+  Cesium.Color.fromCssColorString("#FF4500").withAlpha(0.5),  // Kırmızımsı
+  Cesium.Color.fromCssColorString("#FF8C00").withAlpha(0.5),  // Turuncu
+  Cesium.Color.fromCssColorString("#FFD700").withAlpha(0.5),  // Sarı
+  Cesium.Color.fromCssColorString("#32CD32").withAlpha(0.5),  // Yeşil
+  Cesium.Color.fromCssColorString("#1E90FF").withAlpha(0.5),  // Mavi
+  Cesium.Color.fromCssColorString("#8A2BE2").withAlpha(0.5)   // Mor
+];
+
+// Buffer'ların tutulduğu liste
+let bufferEntities = [];
+let labelEntities = [];
+let pointCounter = 1;
+
+// Function to lock camera movement while panel is open
+function lockCamera() {
+  viewer.scene.screenSpaceCameraController.enableRotate = false;
+  viewer.scene.screenSpaceCameraController.enableTranslate = false;
+  viewer.scene.screenSpaceCameraController.enableZoom = false;
+  viewer.scene.screenSpaceCameraController.enableTilt = false;
+  viewer.scene.screenSpaceCameraController.enableLook = false;
+}
+
+// Function to unlock camera movement after panel is closed
+function unlockCamera() {
+  viewer.scene.screenSpaceCameraController.enableRotate = true;
+  viewer.scene.screenSpaceCameraController.enableTranslate = true;
+  viewer.scene.screenSpaceCameraController.enableZoom = true;
+  viewer.scene.screenSpaceCameraController.enableTilt = true;
+  viewer.scene.screenSpaceCameraController.enableLook = true;
+}
+
+// Function to remove all buffers and labels
+function removeAllBuffers() {
+  bufferEntities.forEach(entity => viewer.entities.remove(entity));
+  labelEntities.forEach(entity => viewer.entities.remove(entity)); // Etiketler de siliniyor
+  bufferEntities = [];
+  labelEntities = [];
+}
+
+// Function to create buffer panel
+function openBufferPanel(position, pointName) {
+  // Lock camera when panel is open
+  lockCamera();
+
+  // Prevent right-click menu from appearing
+  document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+  });
+
+  // Create and display the panel
+  const panel = document.createElement('div');
+  panel.id = 'bufferPanel';
+  panel.style.position = 'fixed';
+  panel.style.top = '50%';
+  panel.style.left = '50%';
+  panel.style.transform = 'translate(-50%, -50%)';
+  panel.style.width = '300px';
+  panel.style.padding = '20px';
+  panel.style.backgroundColor = '#fff';
+  panel.style.border = '2px solid #000';
+  panel.style.zIndex = '1000';
+  panel.style.boxShadow = '0px 4px 6px rgba(0, 0, 0, 0.1)';
+  document.body.appendChild(panel);
+
+  // Panel close button
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = 'X';
+  closeButton.style.position = 'absolute';
+  closeButton.style.top = '10px';
+  closeButton.style.right = '10px';
+  closeButton.addEventListener('click', () => {
+    panel.remove();
+    unlockCamera();
+  });
+  panel.appendChild(closeButton);
+
+  // Input for buffer radius
+  const bufferRadiusLabel = document.createElement('label');
+  bufferRadiusLabel.innerHTML = 'Tampon Yarıçapı Giriniz (metre): ';
+  panel.appendChild(bufferRadiusLabel);
+
+  const bufferRadiusInput = document.createElement('input');
+  bufferRadiusInput.type = 'number';
+  bufferRadiusInput.id = 'bufferRadius';
+  bufferRadiusInput.style.marginBottom = '10px';
+  bufferRadiusInput.style.border = '1px solid #000'; // Kenarları düzeltme
+  panel.appendChild(bufferRadiusInput);
+
+  // Option for multiple rings
+  const multipleRingLabel = document.createElement('label');
+  multipleRingLabel.innerHTML = 'Çoklu Halka Oluştur: ';
+  multipleRingLabel.style.display = 'block';
+  multipleRingLabel.style.marginTop = '10px';
+  panel.appendChild(multipleRingLabel);
+
+  const yesButton = document.createElement('input');
+  yesButton.type = 'radio';
+  yesButton.name = 'multipleRing';
+  yesButton.value = 'yes';
+  yesButton.style.marginRight = '5px';
+  panel.appendChild(yesButton);
+  panel.appendChild(document.createTextNode('Evet'));
+
+  const noButton = document.createElement('input');
+  yesButton.name = 'multipleRing';
+  noButton.type = 'radio';
+  noButton.value = 'no';
+  noButton.checked = true;
+  noButton.style.marginLeft = '20px';
+  noButton.style.marginRight = '5px';
+  panel.appendChild(noButton);
+  panel.appendChild(document.createTextNode('Hayır'));
+
+  // Fields for multiple ring options (hidden by default)
+  const ringCountLabel = document.createElement('label');
+  ringCountLabel.innerHTML = 'Tampon Halka Sayısı: ';
+  ringCountLabel.style.display = 'none';
+  panel.appendChild(ringCountLabel);
+
+  const ringCountInput = document.createElement('input');
+  ringCountInput.type = 'number';
+  ringCountInput.id = 'ringCount';
+  ringCountInput.style.marginBottom = '10px';
+  ringCountInput.style.border = '1px solid #000'; // Kenarları düzeltme
+  ringCountInput.style.display = 'none';
+  panel.appendChild(ringCountInput);
+
+  const ringIncreaseLabel = document.createElement('label');
+  ringIncreaseLabel.innerHTML = 'Tampon Artış Miktarı (%): ';
+  ringIncreaseLabel.style.display = 'none';
+  panel.appendChild(ringIncreaseLabel);
+
+  const ringIncreaseInput = document.createElement('input');
+  ringIncreaseInput.type = 'number';
+  ringIncreaseInput.id = 'ringIncrease';
+  ringIncreaseInput.style.marginBottom = '10px';
+  ringIncreaseInput.style.border = '1px solid #000'; // Kenarları düzeltme
+  ringIncreaseInput.style.display = 'none';
+  panel.appendChild(ringIncreaseInput);
+
+  // Event listener to show/hide multiple ring options
+  yesButton.addEventListener('click', () => {
+    ringCountLabel.style.display = 'block';
+    ringCountInput.style.display = 'block';
+    ringIncreaseLabel.style.display = 'block';
+    ringIncreaseInput.style.display = 'block';
+  });
+
+  noButton.addEventListener('click', () => {
+    ringCountLabel.style.display = 'none';
+    ringCountInput.style.display = 'none';
+    ringIncreaseLabel.style.display = 'none';
+    ringIncreaseInput.style.display = 'none';
+  });
+
+  // Create buffer button
+  const createBufferButton = document.createElement('button');
+  createBufferButton.innerHTML = 'Tampon Oluştur';
+  createBufferButton.style.display = 'block';
+  createBufferButton.style.marginTop = '20px';
+  createBufferButton.addEventListener('click', () => {
+    const radius = parseFloat(bufferRadiusInput.value);
+
+    // Check if multiple rings are selected
+    if (yesButton.checked) {
+      const ringCount = parseInt(ringCountInput.value);
+      const ringIncrease = parseFloat(ringIncreaseInput.value);
+      createMultipleBuffers(position, radius, ringCount, ringIncrease, pointName);
+    } else {
+      createSingleBuffer(position, radius, pointName);
+    }
+
+    panel.remove();
+    unlockCamera();
+  });
+  panel.appendChild(createBufferButton);
+
+  // Event listener for Enter key to submit form
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      createBufferButton.click();
+    }
+  });
+
+  // Close panel with 'Escape' key
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      panel.remove();
+      unlockCamera();
+      removeAllBuffers(); // ESC'ye basıldığında tamponlar kaldırılacak
+    }
+  });
+}
+
+// Function to create a single buffer with line and label
+function createSingleBuffer(position, radius, pointName) {
+  const color = bufferColors[Math.floor(Math.random() * bufferColors.length)];
+  const bufferEntity = viewer.entities.add({
+    position: position,
+    ellipse: {
+      semiMinorAxis: radius,
+      semiMajorAxis: radius,
+      material: color,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+    },
+    point: {
+      pixelSize: 10,
+      color: Cesium.Color.YELLOW,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+    },
+    label: {
+      text: pointName,
+      font: '16px sans-serif',
+      fillColor: Cesium.Color.BLACK,
+      outlineColor: Cesium.Color.WHITE,
+      outlineWidth: 2,
+      style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+      verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+      pixelOffset: new Cesium.Cartesian2(0, -20),
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+    }
+  });
+
+  // Calculate the end position at the given radius distance in a specified direction (e.g., 0 degrees)
+  const center = position;
+  const cartographic = Cesium.Cartographic.fromCartesian(center);
+  const longitude = cartographic.longitude;
+  const latitude = cartographic.latitude;
+
+  // Define the angle (0 radians) for direction and compute the new point
+  const direction = new Cesium.Cartesian3(Math.cos(0), Math.sin(0), 0);
+  const normalizedDirection = Cesium.Cartesian3.normalize(direction, new Cesium.Cartesian3());
+  const endPos = Cesium.Cartesian3.add(
+    center,
+    Cesium.Cartesian3.multiplyByScalar(normalizedDirection, radius, new Cesium.Cartesian3()),
+    new Cesium.Cartesian3()
+  );
+
+  // Draw a white line clamped to the ground from the center to the edge of the circle
+  const lineEntity = viewer.entities.add({
+    polyline: {
+      positions: [position, endPos],
+      width: 2,
+      material: Cesium.Color.WHITE,
+      clampToGround: true
+    }
+  });
+
+  // Create a label for the line's distance in meters
+  const distanceLabel = viewer.entities.add({
+    position: endPos,
+    label: {
+      text: `${Math.round(radius)} metre`, // Display distance in meters
+      font: '16px sans-serif',
+      fillColor: Cesium.Color.WHITE,
+      style: Cesium.LabelStyle.FILL,
+      verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+      pixelOffset: new Cesium.Cartesian2(0, -20),
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+    }
+  });
+
+  labelEntities.push(distanceLabel);
+  bufferEntities.push(bufferEntity);
+  bufferEntities.push(lineEntity);
+}
+
+
+
+// Function to create multiple buffers
+function createMultipleBuffers(position, initialRadius, ringCount, increasePercent, pointName) {
+  for (let i = 0; i < ringCount; i++) {
+    const radius = initialRadius + (initialRadius * (increasePercent / 100) * i);
+    createSingleBuffer(position, radius, `${pointName} - Halka ${i + 1}`);
+  }
+}
+
+// Add point buffer event listener
+document.getElementById('togglePointBuffer').addEventListener('click', () => {
+  document.body.style.cursor = 'crosshair';
+
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+  handler.setInputAction((movement) => {
+    const cartesian = viewer.scene.pickPosition(movement.position);
+
+    if (Cesium.defined(cartesian)) {
+      const pointName = `Nokta ${pointCounter++}`;
+      openBufferPanel(cartesian, pointName); // Open panel on right-click
+    }
+
+    document.body.style.cursor = 'default';
+    handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+});
+
+
+
+
+
+// Function to create buffer along the line using corridor geometry
+function createLineBuffer(positions, distances, colors) {
+  distances.forEach((distance, index) => {
+    // Add buffer for the line
+    viewer.entities.add({
+      corridor: {
+        positions: positions,
+        width: distance * 2, // The buffer width (distance is radius, so width is doubled)
+        material: colors[index],
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, // Clamp the buffer to terrain
+        outline: false, // Disable outline to avoid visual anomalies
+        clampToGround: true
+      },
+    });
+  });
+}
+
+// Line buffer event listener
+document.getElementById('toggleLineBuffer').addEventListener('click', () => {
+  document.body.style.cursor = 'crosshair'; // Change cursor to crosshair
+  
+  let pointCounter = 1;
+  let points = [];
+  let lines = [];
+
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+  // Right-click to add line points
+  handler.setInputAction((movement) => {
+    const cartesian = viewer.scene.pickPosition(movement.position);
+
+    // Check if position is valid
+    if (!Cesium.defined(cartesian)) {
+      console.log('Position not found, please try again.');
+      return;
+    }
+
+    const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+    points.push(cartesian); // Store the Cartesian3 point
+
+    const x = cartesian.x.toFixed(2);
+    const y = cartesian.y.toFixed(2);
+    const z = cartesian.z.toFixed(2);
+
+    // Add the point entity
+    const point = viewer.entities.add({
+      name: `Nokta ${pointCounter++}`,
+      position: cartesian,
+      point: {
+        pixelSize: 10,
+        color: Cesium.Color.YELLOW,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+      label: {
+        text: `Nokta ${pointCounter - 1}`,
+        font: '16px sans-serif',
+        fillColor: Cesium.Color.BLACK,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, -25),
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+      description: `
+        Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+        Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}<br>
+        Height: ${viewer.scene.globe.getHeight(cartographic).toFixed(2)}m<br>
+        X: ${x}<br>
+        Y: ${y}<br>
+        Z: ${z}
+      `,
+    });
+
+    // If two points are available, create a line (but no buffer yet)
+    if (points.length > 1) {
+      const start = points[points.length - 2];
+      const end = points[points.length - 1];
+
+      const distance = Cesium.Cartesian3.distance(start, end).toFixed(2);
+
+      const line = viewer.entities.add({
+        polyline: {
+          positions: [start, end],
+          width: 3,
+          material: Cesium.Color.YELLOW.withAlpha(0.7), // Line visibility
+          clampToGround: true,
+        },
+        label: {
+          text: `${distance} metre`,
+          font: '14px sans-serif',
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -20),
+          showBackground: true,
+          backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        },
+        position: Cesium.Cartesian3.midpoint(start, end, new Cesium.Cartesian3()),
+      });
+
+      lines.push(line);
+    }
+  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+  // Left-click to finalize and create buffers
+  handler.setInputAction(() => {
+    if (points.length > 1) {
+      createLineBuffer(points, bufferDistances, bufferColors);  // Buffer creation now triggered by left-click
+    }
+
+    document.body.style.cursor = 'default';
+    handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+    handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    points = [];
+    lines = [];
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  // Reset everything on 'Esc' key press
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      document.body.style.cursor = 'default';
+      handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+      handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+      viewer.entities.removeAll();
+      points = [];
+      lines = [];
+    }
+  });
+});
+
+// Function to create buffer around a polygon using corridor geometry (similar to line buffer)
+function createPolygonBuffer(positions, distances, colors) {
+  distances.forEach((distance, index) => {
+    // Add buffer for the polygon, using corridor to simulate the width of the buffer
+    viewer.entities.add({
+      corridor: {
+        positions: positions,
+        width: distance * 2, // Width doubled to represent buffer distance (similar to line buffer)
+        material: colors[index],
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND, // Clamp to the terrain
+        outline: false,
+        clampToGround: true
+      },
+    });
+  });
+}
+
+// Polygon buffer event listener
+document.getElementById('togglePolygonBuffer').addEventListener('click', () => {
+  document.body.style.cursor = 'crosshair'; // Change cursor to crosshair
+  
+  let pointCounter = 1;
+  let points = [];
+  let lines = [];
+
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+  // Right-click to add polygon points
+  handler.setInputAction((movement) => {
+    const cartesian = viewer.scene.pickPosition(movement.position);
+
+    // Check if position is valid
+    if (!Cesium.defined(cartesian)) {
+      console.log('Position not found, please try again.');
+      return;
+    }
+
+    points.push(cartesian); // Store the Cartesian3 point
+
+    // Add the point entity
+    const point = viewer.entities.add({
+      name: `Nokta ${pointCounter++}`,
+      position: cartesian,
+      point: {
+        pixelSize: 10,
+        color: Cesium.Color.YELLOW,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+      label: {
+        text: `Nokta ${pointCounter - 1}`,
+        font: '16px sans-serif',
+        fillColor: Cesium.Color.BLACK,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, -25),
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+    });
+
+    // If more than one point is added, create a line between the last two points
+    if (points.length > 1) {
+      const start = points[points.length - 2];
+      const end = points[points.length - 1];
+
+      const distance = Cesium.Cartesian3.distance(start, end).toFixed(2);
+
+      const line = viewer.entities.add({
+        polyline: {
+          positions: [start, end],
+          width: 3,
+          material: Cesium.Color.YELLOW.withAlpha(0.7), // Line visibility
+          clampToGround: true,
+        },
+        label: {
+          text: `${distance} metre`,
+          font: '14px sans-serif',
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -20),
+          showBackground: true,
+          backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        },
+        position: Cesium.Cartesian3.midpoint(start, end, new Cesium.Cartesian3()), // Position the label in the middle of the line
+      });
+
+      lines.push(line); // Store the line entity
+    }
+  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+  // Left-click to finalize the polygon and create buffers
+  handler.setInputAction(() => {
+    if (points.length > 2) {  // Minimum three points required for a polygon
+      points.push(points[0]); // Close the polygon by connecting the last point to the first
+      createPolygonBuffer(points, bufferDistances, bufferColors);  // Polygon buffer creation
+    }
+
+    document.body.style.cursor = 'default';
+    handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+    handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    points = [];
+    lines = [];
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  // Reset everything on 'Esc' key press
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      document.body.style.cursor = 'default';
+      handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+      handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+      viewer.entities.removeAll();
+      points = [];
+      lines = [];
+    }
+  });
+});
+
+let activeBufferType = null; // Aktif olan buffer türünü tutacak değişken
+
+// Point buffer event listener
+document.getElementById('togglePointBuffer').addEventListener('click', () => {
+  if (activeBufferType !== 'point') {
+    activeBufferType = 'point'; // Aktif türü güncelle
+    // Burada point buffer işlevini başlat
+    console.log('Point buffer activated.');
+    // Diğer buffer işlevlerini durdur
+    deactivateOtherBuffers('point');
+  }
+});
+
+// Line buffer event listener
+document.getElementById('toggleLineBuffer').addEventListener('click', () => {
+  if (activeBufferType !== 'line') {
+    activeBufferType = 'line'; // Aktif türü güncelle
+    // Burada line buffer işlevini başlat
+    console.log('Line buffer activated.');
+    // Diğer buffer işlevlerini durdur
+    deactivateOtherBuffers('line');
+  }
+});
+
+// Polygon buffer event listener
+document.getElementById('togglePolygonBuffer').addEventListener('click', () => {
+  if (activeBufferType !== 'polygon') {
+    activeBufferType = 'polygon'; // Aktif türü güncelle
+    // Burada polygon buffer işlevini başlat
+    console.log('Polygon buffer activated.');
+    // Diğer buffer işlevlerini durdur
+    deactivateOtherBuffers('polygon');
+  }
+});
+
+// Diğer butonların işlevlerini devre dışı bırakma fonksiyonu
+function deactivateOtherBuffers(activeType) {
+  if (activeType !== 'point') {
+    // Point buffer'ı devre dışı bırak
+    console.log('Point buffer deactivated.');
+    // Point buffer ile ilgili tüm işlemleri durdur
+  }
+  
+  if (activeType !== 'line') {
+    // Line buffer'ı devre dışı bırak
+    console.log('Line buffer deactivated.');
+    // Line buffer ile ilgili tüm işlemleri durdur
+  }
+
+  if (activeType !== 'polygon') {
+    // Polygon buffer'ı devre dışı bırak
+    console.log('Polygon buffer deactivated.');
+    // Polygon buffer ile ilgili tüm işlemleri durdur
+  }
+}
+
+// Nokta, Çizgi ve Poligon butonlarını seçiyoruz
+const pointBufferButton = document.getElementById('togglePointBuffer');
+const lineBufferButton = document.getElementById('toggleLineBuffer');
+const polygonBufferButton = document.getElementById('togglePolygonBuffer');
+
+// Butonları bir diziye koyuyoruz
+const bufferButtons = [pointBufferButton, lineBufferButton, polygonBufferButton];
+
+// Her bir butona tıklama olayı ekliyoruz
+bufferButtons.forEach(button => {
+  button.addEventListener('click', function() {
+    // Önce tüm buffer butonlarının "active" sınıfını kaldırıyoruz
+    bufferButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Sadece tıklanan butona "active" sınıfını ekliyoruz
+    this.classList.add('active');
+  });
+});
+
+// ESC tuşuna basıldığında aktif butonu sıfırlamak için
+document.addEventListener('keydown', function(event) {
+  if (event.key === "Escape") { // ESC tuşu kontrolü
+    // Tüm buffer butonlarından "active" sınıfını kaldır
+    bufferButtons.forEach(btn => btn.classList.remove('active'));
+  }
+});
+
+// Nokta, Çizgi ve Poligon butonlarını seçiyoruz
+const pointButton = document.getElementById('togglePoint');
+const lineButton = document.getElementById('toggleLine');
+const polygonButton = document.getElementById('togglePolygon');
+
+// Butonları bir diziye koyuyoruz
+const createButtons = [pointButton, lineButton, polygonButton];
+
+// Her bir butona tıklama olayı ekliyoruz
+createButtons.forEach(button => {
+  button.addEventListener('click', function() {
+    // Önce tüm butonların "active" sınıfını kaldırıyoruz
+    createButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Sadece tıklanan butona "active" sınıfını ekliyoruz
+    this.classList.add('active');
+  });
+});
+
+// ESC tuşuna basıldığında aktif butonu sıfırlamak için
+document.addEventListener('keydown', function(event) {
+  if (event.key === "Escape") { // ESC tuşu kontrolü
+    // Tüm butonlardan "active" sınıfını kaldır
+    createButtons.forEach(btn => btn.classList.remove('active'));
+  }
+});
+
+
+
+document.getElementById('toggleViewshed').addEventListener('click', () => {
+    document.body.style.cursor = 'crosshair';
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    let observationPoint = null;
+    let rangeLimiters = [];
+    let targetPoints = [];
+    let lines = [];
+    let failedObservations = 0;
+    let analysisFinished = false;
+
+    handler.setInputAction((movement) => {
+        if (analysisFinished) return;
+
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (cartesian && !observationPoint) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            observationPoint = viewer.entities.add({
+                name: 'Gözlem Noktası',
+                position: cartesian,
+                point: { pixelSize: 10, color: Cesium.Color.GREEN },
+                label: {
+                    text: 'Gözlem Noktası',
+                    font: '16px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                },
+                description: `
+                  Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+                  Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}
+                `,
+            });
+        } else if (cartesian && rangeLimiters.length < 2) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            const rangeLimiter = viewer.entities.add({
+                name: `Range Limiter ${rangeLimiters.length + 1}`,
+                position: cartesian,
+                point: { pixelSize: 10, color: Cesium.Color.GREEN },
+                label: {
+                    text: `Gözlem Aralığı Sınırı ${rangeLimiters.length + 1}`,
+                    font: '16px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                },
+                description: `
+                  Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+                  Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}
+                `,
+            });
+
+            rangeLimiters.push(rangeLimiter);
+
+            // Draw black line between Observation Point and Range Limiter
+            const startPosition = observationPoint.position.getValue(Cesium.JulianDate.now());
+            const line = viewer.entities.add({
+                polyline: {
+                    positions: [startPosition, cartesian],
+                    width: 2,
+                    material: Cesium.Color.BLACK,
+                },
+            });
+            lines.push(line);
+
+            if (rangeLimiters.length === 2) {
+                // Begin ray scattering analysis between Range Limiters
+                performRayScattering(startPosition, rangeLimiters);
+            }
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    handler.setInputAction(() => {
+        analysisFinished = true;
+        document.body.style.cursor = 'default';
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === "Escape") {
+            document.body.style.cursor = 'default';
+            viewer.entities.removeAll();
+            observationPoint = null;
+            rangeLimiters = [];
+            targetPoints = [];
+            lines = [];
+            failedObservations = 0;
+        }
+    });
+
+    function performRayScattering(startPosition, rangeLimiters) {
+        const numRays = 60; // Increase number of rays for higher density
+        const rangeStart = rangeLimiters[0].position.getValue(Cesium.JulianDate.now());
+        const rangeEnd = rangeLimiters[1].position.getValue(Cesium.JulianDate.now());
+        const totalDistance = Cesium.Cartesian3.distance(rangeStart, rangeEnd);
+
+        for (let i = 0; i < numRays; i++) {
+            const fraction = i / (numRays - 1); // Spread rays evenly
+            const interpolatedPoint = Cesium.Cartesian3.lerp(rangeStart, rangeEnd, fraction, new Cesium.Cartesian3());
+
+            const direction = Cesium.Cartesian3.normalize(
+                Cesium.Cartesian3.subtract(interpolatedPoint, startPosition, new Cesium.Cartesian3()),
+                new Cesium.Cartesian3()
+            );
+
+            const ray = new Cesium.Ray(startPosition, direction);
+
+            viewer.scene.pickFromRayMostDetailed(ray).then((result) => {
+                if (result && Cesium.Cartesian3.distance(startPosition, result.position) < totalDistance) {
+                    const lineGreen = viewer.entities.add({
+                        polyline: {
+                            positions: [startPosition, result.position],
+                            width: 2,
+                            material: Cesium.Color.GREEN,
+                        },
+                    });
+                    lines.push(lineGreen);
+
+                    const obstaclePoint = viewer.entities.add({
+                        name: `Görüş Engelleyen Nokta ${targetPoints.length + 1}`,
+                        position: result.position,
+                        point: { pixelSize: 10, color: Cesium.Color.YELLOW },
+                        label: {
+                            text: `Görüş Engelleyen Nokta`,
+                            font: '16px sans-serif',
+                            fillColor: Cesium.Color.WHITE,
+                            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                            pixelOffset: new Cesium.Cartesian2(0, -20),
+                        },
+                    });
+
+                    const lineRed = viewer.entities.add({
+                        polyline: {
+                            positions: [result.position, interpolatedPoint],
+                            width: 2,
+                            material: Cesium.Color.RED,
+                        },
+                    });
+                    lines.push(lineRed);
+                } else {
+                    const line = viewer.entities.add({
+                        polyline: {
+                            positions: [startPosition, interpolatedPoint],
+                            width: 2,
+                            material: Cesium.Color.GREEN,
+                        },
+                    });
+                    lines.push(line);
+                }
+            });
+        }
+    }
+});
+
+document.getElementById('toggleLineofSight').addEventListener('click', () => {
+    document.body.style.cursor = 'crosshair';
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    let observationPoint = null;
+    let targetPoints = [];
+    let lines = [];
+    let failedObservations = 0;
+    let analysisFinished = false; // Sol tık ile analiz bitirme durumu için flag
+
+    // İlk sağ tıklamada gözlem noktası ekle (Observation Point)
+    handler.setInputAction((movement) => {
+        if (analysisFinished) return; // Eğer analiz bitirildiyse işlem yapma
+
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (cartesian && !observationPoint) {
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+
+            observationPoint = viewer.entities.add({
+                name: 'Gözlem Noktası',
+                position: cartesian,
+                point: {
+                    pixelSize: 10,
+                    color: Cesium.Color.GREEN, // Observation Point yeşil
+                },
+                label: {
+                    text: 'Gözlem Noktası',
+                    font: '16px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                },
+                description: `
+                  Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+                  Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}
+                `
+            });
+
+            document.getElementById('legend').style.display = 'block';
+            document.getElementById('observationCoords').textContent = `
+              Gözlem Noktası Koordinatları: 
+              Enlem: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}, 
+              Boylam: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}
+            `;
+        } else if (cartesian && observationPoint) {
+            // Sonraki sağ tıklamalarda Target Point ekle
+            const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+            const targetPoint = viewer.entities.add({
+                name: `Hedef Nokta ${targetPoints.length + 1}`,
+                position: cartesian,
+                point: {
+                    pixelSize: 10,
+                    color: Cesium.Color.GREEN, // Varsayılan yeşil
+                },
+                label: {
+                    text: `Hedef Nokta ${targetPoints.length + 1}`,
+                    font: '16px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                },
+                description: `
+                  Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+                  Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}
+                `
+            });
+
+            targetPoints.push(targetPoint);
+
+            // Line of Sight analizi için çizgiye bak
+            const startPosition = observationPoint.position.getValue(Cesium.JulianDate.now());
+            const direction = Cesium.Cartesian3.normalize(
+                Cesium.Cartesian3.subtract(cartesian, startPosition, new Cesium.Cartesian3()), 
+                new Cesium.Cartesian3()
+            );
+
+            // pickFromRayMostDetailed ile 3D binaları ve diğer nesneleri kontrol et
+            const ray = new Cesium.Ray(startPosition, direction);
+            viewer.scene.pickFromRayMostDetailed(ray).then((result) => {
+                if (result && Cesium.Cartesian3.distance(startPosition, result.position) < Cesium.Cartesian3.distance(startPosition, cartesian)) {
+                    // Yeşil çizgi engel noktasına kadar
+                    const lineGreen = viewer.entities.add({
+                        polyline: {
+                            positions: [startPosition, result.position],
+                            width: 2,
+                            material: Cesium.Color.GREEN,
+                        },
+                    });
+                    lines.push(lineGreen);
+
+                    // Sarı renkte "Obstacle Point" ekle
+                    const obstaclePoint = viewer.entities.add({
+                        name: `Görüş Engelleyen Nokta ${targetPoints.length}`,
+                        position: result.position,
+                        point: {
+                            pixelSize: 10,
+                            color: Cesium.Color.YELLOW,
+                        },
+                        label: {
+                            text: `Görüş Engelleyen Nokta ${targetPoints.length}`,
+                            font: '16px sans-serif',
+                            fillColor: Cesium.Color.WHITE,
+                            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                            pixelOffset: new Cesium.Cartesian2(0, -20),
+                        }
+                    });
+
+                    // Kırmızı çizgi engel noktasından hedefe
+                    const lineRed = viewer.entities.add({
+                        polyline: {
+                            positions: [result.position, cartesian],
+                            width: 2,
+                            material: Cesium.Color.RED,
+                        },
+                    });
+
+                    lines.push(lineRed);
+                    targetPoint.point.color = Cesium.Color.RED; // Hedef nokta kırmızı
+                    failedObservations++;
+                    document.getElementById('failedObservations').textContent = failedObservations;
+                } else {
+                    // Engel yoksa tamamı yeşil çizgi
+                    const line = viewer.entities.add({
+                        polyline: {
+                            positions: [startPosition, cartesian],
+                            width: 2,
+                            material: Cesium.Color.GREEN,
+                        },
+                    });
+
+                    lines.push(line);
+                }
+
+                document.getElementById('numObservations').textContent = targetPoints.length;
+            });
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // Sol tık ile noktaların eklenmesini bitir
+    handler.setInputAction(() => {
+        analysisFinished = true; // Analiz tamamlandı
+        document.body.style.cursor = 'default'; // İşaretçiyi varsayılan yap
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // ESC ile tüm analizleri sıfırla
+    document.addEventListener('keydown', (event) => {
+        if (event.key === "Escape") {
+            viewer.entities.removeAll(); // Tüm varlıkları kaldır
+            observationPoint = null;
+            targetPoints = [];
+            lines = [];
+            failedObservations = 0;
+            document.getElementById('failedObservations').textContent = "0";
+            document.getElementById('numObservations').textContent = "0";
+            document.body.style.cursor = 'default';
+        }
+    });
+});
+
+let activeAnalysisType = null; // Aktif olan analiz türünü tutacak değişken
+
+// Görüş Alanı Analizi event listener
+document.getElementById('toggleViewshed').addEventListener('click', () => {
+  if (activeAnalysisType !== 'viewshed') {
+    activeAnalysisType = 'viewshed'; // Aktif türü güncelle
+    // Burada Görüş Alanı Analizi işlevini başlat
+    console.log('Viewshed analysis activated.');
+    // Diğer analiz işlevlerini durdur
+    deactivateOtherAnalyses('viewshed');
+  }
+});
+
+// Görüş Hattı Analizi event listener
+document.getElementById('toggleLineofSight').addEventListener('click', () => {
+  if (activeAnalysisType !== 'lineofSight') {
+    activeAnalysisType = 'lineofSight'; // Aktif türü güncelle
+    // Burada Görüş Hattı Analizi işlevini başlat
+    console.log('Line of Sight analysis activated.');
+    // Diğer analiz işlevlerini durdur
+    deactivateOtherAnalyses('lineofSight');
+  }
+});
+
+// Diğer analizlerin işlevlerini devre dışı bırakma fonksiyonu
+function deactivateOtherAnalyses(activeType) {
+  if (activeType !== 'viewshed') {
+    // Görüş Alanı Analizi'ni devre dışı bırak
+    console.log('Viewshed analysis deactivated.');
+    // Görüş Alanı Analizi ile ilgili tüm işlemleri durdur
+  }
+  
+  if (activeType !== 'lineofSight') {
+    // Görüş Hattı Analizi'ni devre dışı bırak
+    console.log('Line of Sight analysis deactivated.');
+    // Görüş Hattı Analizi ile ilgili tüm işlemleri durdur
+  }
+}
+
+// Görüş Alanı ve Görüş Hattı butonlarını seçiyoruz
+const viewshedButton = document.getElementById('toggleViewshed');
+const lineofSightButton = document.getElementById('toggleLineofSight');
+
+// Butonları bir diziye koyuyoruz
+const analysisButtons = [viewshedButton, lineofSightButton];
+
+// Her bir butona tıklama olayı ekliyoruz
+analysisButtons.forEach(button => {
+  button.addEventListener('click', function() {
+    // Önce tüm analiz butonlarının "active" sınıfını kaldırıyoruz
+    analysisButtons.forEach(btn => btn.classList.remove('active'));
+    
+    // Sadece tıklanan butona "active" sınıfını ekliyoruz
+    this.classList.add('active');
+  });
+});
+
+// ESC tuşuna basıldığında aktif butonu sıfırlamak için
+document.addEventListener('keydown', function(event) {
+  if (event.key === "Escape") { // ESC tuşu kontrolü
+    // Tüm analiz butonlarından "active" sınıfını kaldır
+    analysisButtons.forEach(btn => btn.classList.remove('active'));
+  }
+});
+
+
+
+// Koordinat yakalama aracı
+let coordinatehandler = null;
+let createdPoints = []; // Noktaları saklamak için bir dizi
+
+// Function to activate Coordinate Saver mode
+function activateCoordinateSaver() {
+  // Change cursor to crosshair
+  viewer.scene.canvas.style.cursor = 'crosshair';
+
+  // Create a new event handler
+  coordinatehandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+  
+  // On right-click, add the point at the exact crosshair location
+  coordinatehandler.setInputAction((event) => {
+    const ray = viewer.camera.getPickRay(event.position);
+    const cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+    
+    if (cartesian) {
+      const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+      const coordinatesText = formatCoordinates(cartographic);
+
+      // Add the point entity with coordinates as label
+      const pointEntity = viewer.entities.add({
+        position: cartesian,
+        point: {
+          pixelSize: 10,
+          color: Cesium.Color.YELLOW,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        },
+        label: {
+          text: coordinatesText, // Use the formatted coordinates
+          font: '16px sans-serif',
+          fillColor: Cesium.Color.BLACK,
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(0, -25),
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        },
+      });
+
+      createdPoints.push(pointEntity); // Noktayı diziye ekle
+      // Reset the cursor after marking the point
+      viewer.scene.canvas.style.cursor = 'default';
+    }
+  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+  // ESC key event to cancel Coordinate Saver mode and reset points
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      viewer.scene.canvas.style.cursor = 'default';
+      if (coordinatehandler) {
+        coordinatehandler.destroy();
+      }
+
+      // Ekrandaki tüm noktaları temizle
+      createdPoints.forEach(point => viewer.entities.remove(point));
+      createdPoints = []; // Dizi içeriğini sıfırla
+    }
+  });
+}
+
+// Function to format geographic coordinates
+function formatCoordinates(cartographic) {
+  const lonDegrees = Cesium.Math.toDegrees(cartographic.longitude);
+  const latDegrees = Cesium.Math.toDegrees(cartographic.latitude);
+
+  const lon = Math.abs(lonDegrees).toFixed(7);
+  const lat = Math.abs(latDegrees).toFixed(7);
+  const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+
+  const lonDirection = lonDegrees >= 0 ? 'D' : 'B';
+  const latDirection = latDegrees >= 0 ? 'K' : 'G';
+
+  return `${lat}°${latDirection}, ${lon}°${lonDirection}, ${height}m`;
+}
+
+// Adding event listeners to both buttons
+document.getElementById('coordinatesaverButton').addEventListener('click', activateCoordinateSaver);
+document.getElementById('togglePoint').addEventListener('click', activateCoordinateSaver);
+
+
+
+//Çizgi Oluşturma Aracı
+document.getElementById('toggleLine').addEventListener('click', () => { 
+    document.body.style.cursor = 'crosshair';
+
+    let pointCounter = 1;
+    let points = [];
+    let lines = [];
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    handler.setInputAction((movement) => {
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (!cartesian) return;
+
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        points.push(cartographic);
+
+        const x = cartesian.x.toFixed(2);
+        const y = cartesian.y.toFixed(2);
+        const z = cartesian.z.toFixed(2);
+
+        // Add the point entity
+        const point = viewer.entities.add({
+            name: `Nokta ${pointCounter++}`,
+            position: cartesian,
+            point: {
+                pixelSize: 10,
+                color: Cesium.Color.YELLOW,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            },
+            label: {
+                text: `Nokta ${pointCounter - 1}`,
+                font: '16px sans-serif',
+                fillColor: Cesium.Color.BLACK,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                pixelOffset: new Cesium.Cartesian2(0, -25),
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            },
+            description: `
+              Latitude: ${Cesium.Math.toDegrees(cartographic.latitude).toFixed(6)}<br>
+              Longitude: ${Cesium.Math.toDegrees(cartographic.longitude).toFixed(6)}<br>
+              Height: ${viewer.scene.globe.getHeight(cartographic).toFixed(2)}m<br>
+              X: ${x}<br>
+              Y: ${y}<br>
+              Z: ${z}
+            `
+        });
+
+        if (points.length > 1) {
+            const start = points[points.length - 2];
+            const end = points[points.length - 1];
+            const startCartesian = Cesium.Cartesian3.fromRadians(start.longitude, start.latitude, start.height);
+            const endCartesian = Cesium.Cartesian3.fromRadians(end.longitude, end.latitude, end.height);
+
+            // Calculate distance
+            const distance = Cesium.Cartesian3.distance(startCartesian, endCartesian).toFixed(2);
+
+            const line = viewer.entities.add({
+                polyline: {
+                    positions: [startCartesian, endCartesian],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7), // Make the line visible
+                    clampToGround: true
+                },
+                label: {
+                    text: `${distance} metre`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: Cesium.Cartesian3.midpoint(startCartesian, endCartesian, new Cesium.Cartesian3())
+            });
+
+            lines.push(line);
+        }
+
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // Polygon kapanmasını engellemek için sol tık işlemi sadeleştirildi
+    handler.setInputAction(() => {
+        document.body.style.cursor = 'default';
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+        points = [];
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            document.body.style.cursor = 'default';
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            viewer.entities.removeAll();
+            points = [];
+            lines = [];
+        }
+    });
+});
+
+document.getElementById('togglePolygon').addEventListener('click', () => {
+    document.body.style.cursor = 'crosshair'; // Crosshair butona tıklandığında aktif olsun
+
+    let pointCounter = 1;
+    let points = [];
+    let lines = [];
+    let polygonEntity;
+    let isPolygonClosed = false;
+
+    // Turf.js kullanarak alan ve merkez hesaplama fonksiyonu
+    function calculateAreaAndCentroidWithTurf(points) {
+        if (points.length < 3) {
+            return { area: 0, centroid: null };
+        }
+
+        const turfPolygon = {
+            type: "Feature",
+            geometry: {
+                type: "Polygon",
+                coordinates: [
+                    points.map(p => [
+                        Cesium.Math.toDegrees(p.longitude),
+                        Cesium.Math.toDegrees(p.latitude)
+                    ])
+                ]
+            }
+        };
+
+        // İlk ve son noktayı aynı yaparak poligonu kapat
+        turfPolygon.geometry.coordinates[0].push(turfPolygon.geometry.coordinates[0][0]);
+
+        const area = turf.area(turfPolygon);
+        const centroidFeature = turf.centroid(turfPolygon);
+        const [centroidX, centroidY] = centroidFeature.geometry.coordinates;
+        const centroid = Cesium.Cartesian3.fromDegrees(centroidX, centroidY);
+
+        return { area, centroid };
+    }
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    // Sağ tıklama: Poligona yeni bir nokta ekleme
+    handler.setInputAction((movement) => {
+        if (isPolygonClosed) return;  // Eğer poligon kapandıysa yeni nokta eklemeyi durdur
+
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (!cartesian) return;
+
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        points.push(cartographic);
+
+        // Nokta ekleme
+        viewer.entities.add({
+            name: `Nokta ${pointCounter++}`,
+            position: cartesian,
+            point: {
+                pixelSize: 10,
+                color: Cesium.Color.YELLOW,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            },
+            label: {
+                text: `Nokta ${pointCounter - 1}`,
+                font: '16px sans-serif',
+                fillColor: Cesium.Color.BLACK,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                pixelOffset: new Cesium.Cartesian2(0, -25),
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            }
+        });
+
+        // Çizgi ekleme
+        if (points.length > 1) {
+            const start = points[points.length - 2];
+            const end = points[points.length - 1];
+            const startCartesian = Cesium.Cartesian3.fromRadians(start.longitude, start.latitude, start.height);
+            const endCartesian = Cesium.Cartesian3.fromRadians(end.longitude, end.latitude, end.height);
+
+            const distance = Cesium.Cartesian3.distance(startCartesian, endCartesian).toFixed(2);
+
+            const line = viewer.entities.add({
+                polyline: {
+                    positions: [startCartesian, endCartesian],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7),
+                    clampToGround: true
+                },
+                label: {
+                    text: `${distance} metre`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: Cesium.Cartesian3.midpoint(startCartesian, endCartesian, new Cesium.Cartesian3())
+            });
+
+            lines.push(line);
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // Sol tıklama: Poligonu kapatma
+    handler.setInputAction(() => {
+        if (points.length > 2 && !isPolygonClosed) {
+            isPolygonClosed = true;
+
+            const positions = points.map(p => Cesium.Cartesian3.fromRadians(p.longitude, p.latitude, p.height));
+            positions.push(positions[0]); // İlk noktayı son noktaya ekle
+
+            // Kapanan son çizgi
+            const finalDistance = Cesium.Cartesian3.distance(positions[positions.length - 2], positions[0]).toFixed(2);
+
+            viewer.entities.add({
+                polyline: {
+                    positions: [positions[positions.length - 2], positions[0]],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7),
+                    clampToGround: true
+                },
+                label: {
+                    text: `${finalDistance} metre`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: Cesium.Cartesian3.midpoint(positions[positions.length - 2], positions[0], new Cesium.Cartesian3())
+            });
+
+            // Alan ve merkez hesaplaması
+            const { area: polygonArea, centroid } = calculateAreaAndCentroidWithTurf(points);
+
+            // Sarı renkle dolu poligon ekleme
+            const polygonEntity = viewer.entities.add({
+                polygon: {
+                    hierarchy: new Cesium.PolygonHierarchy(positions),
+                    material: new Cesium.ColorMaterialProperty(
+                        Cesium.Color.YELLOW.withAlpha(0.5) // Sarı renkte yarı saydam dolgu
+                    ),
+                    outline: true, // Çizgi ekleme
+                    outlineColor: Cesium.Color.YELLOW, // Çizgi sarı renk
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                }
+            });
+
+            // Poligon Merkez Noktası (Centroid) ekleme
+            viewer.entities.add({
+                position: centroid,
+                point: {
+                    pixelSize: 10,
+                    color: Cesium.Color.RED,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                label: {
+                    text: 'Poligon Merkez Noktası',
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                }
+            });
+
+            // Alanı centroid'in üzerine yazdırma
+            viewer.entities.add({
+                label: {
+                    text: `Alan: ${polygonArea.toFixed(2)} m²`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -40),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: centroid
+            });
+
+            // Yeni poligon için hazırlık - Poligon kapandı, yeni bir poligon başlatmak için resetleniyor
+            isPolygonClosed = false; // Poligon kapandı, yeni poligon için kapalı duruma geçir
+            points = []; // Yeni bir poligon için noktaları sıfırla
+            lines = []; // Çizgileri sıfırla
+        }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // Escape tuşu ile sıfırlama
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            // İmleci varsayılan hale döndür
+            document.body.style.cursor = 'default';
+
+            // Tüm işlemleri sıfırla
+            isPolygonClosed = false;
+            points = [];
+            lines = [];
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        }
+    });
+});
+
+//Daire ve Çember Oluşturma İşlevi
+let drawingHandler = null;
+let centerPoint = null;
+let currentShape = null;
+let radiusLine = null;
+let dynamicLabel = null;
+
+// Function to start drawing either a circle or a ring
+function activateShapeDrawing(type) {
+  viewer.scene.canvas.style.cursor = 'crosshair';
+
+  // Create a new event handler for drawing
+  drawingHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+  // First, set the center point
+  drawingHandler.setInputAction((event) => {
+    const ray = viewer.camera.getPickRay(event.position);
+    const cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+
+    if (cartesian && !centerPoint) {
+      // Mark the center point
+      centerPoint = viewer.entities.add({
+        position: cartesian,
+        point: {
+          pixelSize: 10,
+          color: Cesium.Color.YELLOW,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        }
+      });
+    }
+  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+  // Dynamic mouse move to adjust shape size
+  drawingHandler.setInputAction((movement) => {
+    if (centerPoint) {
+      const ray = viewer.camera.getPickRay(movement.endPosition);
+      const cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+
+      if (cartesian) {
+        const radius = Cesium.Cartesian3.distance(centerPoint.position.getValue(Cesium.JulianDate.now()), cartesian);
+        const center = centerPoint.position.getValue(Cesium.JulianDate.now());
+
+        // Clear previous shape and radius line
+        if (currentShape) viewer.entities.remove(currentShape);
+        if (radiusLine) viewer.entities.remove(radiusLine);
+
+        // Create circle or ring based on type
+        if (type === 'circle') {
+          currentShape = viewer.entities.add({
+            position: center,
+            ellipse: {
+              semiMinorAxis: radius,
+              semiMajorAxis: radius,
+              material: Cesium.Color.YELLOW.withAlpha(0.3), // Lighter yellow for fill
+              outline: true,
+              outlineColor: Cesium.Color.YELLOW, // Yellow outline
+              outlineWidth: 3,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            },
+          });
+        } else if (type === 'ring') {
+          currentShape = viewer.entities.add({
+            position: center,
+            ellipse: {
+              semiMinorAxis: radius,
+              semiMajorAxis: radius,
+              material: Cesium.Color.TRANSPARENT, // No fill for ring
+              outline: true,
+              outlineColor: Cesium.Color.YELLOW, // Yellow outline
+              outlineWidth: 3,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            },
+          });
+        }
+
+        // Draw radius line
+        radiusLine = viewer.entities.add({
+          polyline: {
+            positions: [center, cartesian],
+            width: 2,
+            material: Cesium.Color.WHITE,
+            clampToGround: true,
+          }
+        });
+
+        // Update or create dynamic label for radius (aligned along the line)
+        const midpoint = Cesium.Cartesian3.midpoint(center, cartesian, new Cesium.Cartesian3());
+        const labelPosition = midpoint;
+
+        if (!dynamicLabel) {
+          dynamicLabel = viewer.entities.add({
+            position: labelPosition,
+            label: {
+              text: `${radius.toFixed(2)} metres`,
+              font: '16px sans-serif',
+              fillColor: Cesium.Color.WHITE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              pixelOffset: new Cesium.Cartesian2(0, -10), // Position label above the line
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+              horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              eyeOffset: new Cesium.Cartesian3(0.0, 0.0, -10.0),
+            },
+          });
+        } else {
+          dynamicLabel.position = labelPosition;
+          dynamicLabel.label.text = `${radius.toFixed(2)} metres`;
+        }
+      }
+    }
+  }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+  // ESC key to reset everything
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      viewer.entities.remove(centerPoint);
+      viewer.entities.remove(currentShape);
+      viewer.entities.remove(radiusLine);
+      viewer.entities.remove(dynamicLabel);
+      centerPoint = null;
+      currentShape = null;
+      radiusLine = null;
+      dynamicLabel = null;
+      drawingHandler.destroy();
+      viewer.scene.canvas.style.cursor = 'default';
+    }
+  });
+}
+
+// Attach these functions to your buttons
+document.getElementById('toggleCircle').addEventListener('click', () => activateShapeDrawing('circle'));
+document.getElementById('toggleRing').addEventListener('click', () => activateShapeDrawing('ring'));
+
+// Javascript ile ekranın sağ alt köşesine yazı eklemek
+const creditElement = document.createElement('div');
+creditElement.innerText = "© İTÜ Geomatik Mühendisliği, 2024";
+creditElement.style.position = 'absolute';
+creditElement.style.bottom = '5px';
+creditElement.style.right = '700px';
+creditElement.style.color = 'white';
+creditElement.style.fontSize = '12px';
+creditElement.style.zIndex = '1000';
+document.body.appendChild(creditElement);
+
+////////////////////////////////////////////////////////TOPOĞRAFİK ANALİZ ARAÇLARI/////////////////////////////////////////////////
+
+////////////////////////////////////KAZI/DOLGU ANALİZİ//////////////////////////////
+document.getElementById('toggleFillCut').addEventListener('click', () => {
+    document.body.style.cursor = 'crosshair'; // Crosshair butona tıklandığında aktif olsun
+
+    let pointCounter = 1;
+    let points = [];
+    let lines = [];
+    let polygonEntity;
+    let isPolygonClosed = false;
+
+    // Turf.js kullanarak alan ve merkez hesaplama fonksiyonu
+    function calculateAreaAndCentroidWithTurf(points) {
+        if (points.length < 3) {
+            return { area: 0, centroid: null };
+        }
+
+        const turfPolygon = {
+            type: "Feature",
+            geometry: {
+                type: "Polygon",
+                coordinates: [
+                    points.map(p => [
+                        Cesium.Math.toDegrees(p.longitude),
+                        Cesium.Math.toDegrees(p.latitude)
+                    ])
+                ]
+            }
+        };
+
+        // İlk ve son noktayı aynı yaparak poligonu kapat
+        turfPolygon.geometry.coordinates[0].push(turfPolygon.geometry.coordinates[0][0]);
+
+        const area = turf.area(turfPolygon);
+        const centroidFeature = turf.centroid(turfPolygon);
+        const [centroidX, centroidY] = centroidFeature.geometry.coordinates;
+        const centroid = Cesium.Cartesian3.fromDegrees(centroidX, centroidY);
+
+        return { area, centroid };
+    }
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    // Sağ tıklama: Poligona yeni bir nokta ekleme
+    handler.setInputAction((movement) => {
+        if (isPolygonClosed) return;  // Eğer poligon kapandıysa yeni nokta eklemeyi durdur
+
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (!cartesian) return;
+
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        points.push(cartographic);
+
+        // Nokta ekleme
+        viewer.entities.add({
+            name: `Nokta ${pointCounter++}`,
+            position: cartesian,
+            point: {
+                pixelSize: 10,
+                color: Cesium.Color.YELLOW,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            },
+            label: {
+                text: `Nokta ${pointCounter - 1}`,
+                font: '16px sans-serif',
+                fillColor: Cesium.Color.BLACK,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                pixelOffset: new Cesium.Cartesian2(0, -25),
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            }
+        });
+
+        // Çizgi ekleme
+        if (points.length > 1) {
+            const start = points[points.length - 2];
+            const end = points[points.length - 1];
+            const startCartesian = Cesium.Cartesian3.fromRadians(start.longitude, start.latitude, start.height);
+            const endCartesian = Cesium.Cartesian3.fromRadians(end.longitude, end.latitude, end.height);
+
+            const distance = Cesium.Cartesian3.distance(startCartesian, endCartesian).toFixed(2);
+
+            const line = viewer.entities.add({
+                polyline: {
+                    positions: [startCartesian, endCartesian],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7),
+                    clampToGround: true
+                },
+                label: {
+                    text: `${distance} metre`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: Cesium.Cartesian3.midpoint(startCartesian, endCartesian, new Cesium.Cartesian3())
+            });
+
+            lines.push(line);
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    // Sol tıklama: Poligonu kapatma
+    handler.setInputAction(() => {
+        if (points.length > 2 && !isPolygonClosed) {
+            isPolygonClosed = true;
+
+            const positions = points.map(p => Cesium.Cartesian3.fromRadians(p.longitude, p.latitude, p.height));
+            positions.push(positions[0]); // İlk noktayı son noktaya ekle
+
+            // Kapanan son çizgi
+            const finalDistance = Cesium.Cartesian3.distance(positions[positions.length - 2], positions[0]).toFixed(2);
+
+            viewer.entities.add({
+                polyline: {
+                    positions: [positions[positions.length - 2], positions[0]],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7),
+                    clampToGround: true
+                },
+                label: {
+                    text: `${finalDistance} metre`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: Cesium.Cartesian3.midpoint(positions[positions.length - 2], positions[0], new Cesium.Cartesian3())
+            });
+
+            // Alan ve merkez hesaplaması
+            const { area: polygonArea, centroid } = calculateAreaAndCentroidWithTurf(points);
+
+            // Sarı renkle dolu poligon ekleme
+            const polygonEntity = viewer.entities.add({
+                polygon: {
+                    hierarchy: new Cesium.PolygonHierarchy(positions),
+                    material: new Cesium.ColorMaterialProperty(
+                        Cesium.Color.YELLOW.withAlpha(0.5) // Sarı renkte yarı saydam dolgu
+                    ),
+                    outline: true, // Çizgi ekleme
+                    outlineColor: Cesium.Color.YELLOW, // Çizgi sarı renk
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                }
+            });
+
+            // Poligon Merkez Noktası (Centroid) ekleme
+            viewer.entities.add({
+                position: centroid,
+                point: {
+                    pixelSize: 10,
+                    color: Cesium.Color.RED,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                label: {
+                    text: 'Poligon Merkez Noktası',
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                }
+            });
+
+            // Alanı centroid'in üzerine yazdırma
+            viewer.entities.add({
+                label: {
+                    text: `Alan: ${polygonArea.toFixed(2)} m²`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -40),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: centroid
+            });
+
+            // Yeni poligon için hazırlık - Poligon kapandı, yeni bir poligon başlatmak için resetleniyor
+            isPolygonClosed = false; // Poligon kapandı, yeni poligon için kapalı duruma geçir
+            points = []; // Yeni bir poligon için noktaları sıfırla
+            lines = []; // Çizgileri sıfırla
+        }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // Escape tuşu ile sıfırlama
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            // İmleci varsayılan hale döndür
+            document.body.style.cursor = 'default';
+
+            // Tüm işlemleri sıfırla
+            isPolygonClosed = false;
+            points = [];
+            lines = [];
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        }
+    });
+});
+
+/////////////////////////////////ÜÇGENLEME FONKSİYONU///////////////////////////////////////////////////////////////
+
+document.getElementById('toggleTriangulation').addEventListener('click', () => {
+    document.body.style.cursor = 'crosshair';
+
+    let pointCounter = 1;
+    let points = [];
+    let lines = [];
+    let isPolygonClosed = false;
+
+    function triangulateWithTin(points) {
+        if (points.length < 3) {
+            return { triangles: [], centroid: null };
+        }
+
+        // Turf.js için poligon noktalarını FeatureCollection formatına çevir
+        const turfPoints = {
+            type: "FeatureCollection",
+            features: points.map((point, index) => ({
+                type: "Feature",
+                geometry: {
+                    type: "Point",
+                    coordinates: [
+                        Cesium.Math.toDegrees(point.longitude),
+                        Cesium.Math.toDegrees(point.latitude)
+                    ]
+                },
+                properties: { z: index }
+            }))
+        };
+
+        // Turf.js tin fonksiyonu ile TIN (Triangulated Irregular Network) oluştur
+        const tin = turf.tin(turfPoints, "z");
+
+        // Turf.js centroid ile poligonun merkezini bul
+        const centroidFeature = turf.centroid(turfPoints);
+        const [centroidX, centroidY] = centroidFeature.geometry.coordinates;
+        const centroid = Cesium.Cartesian3.fromDegrees(centroidX, centroidY);
+
+        return { triangles: tin.features, centroid };
+    }
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    handler.setInputAction((movement) => {
+        if (isPolygonClosed) return;
+
+        const cartesian = viewer.scene.pickPosition(movement.position);
+        if (!cartesian) return;
+
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        points.push(cartographic);
+
+        viewer.entities.add({
+            name: `Nokta ${pointCounter++}`,
+            position: cartesian,
+            point: {
+                pixelSize: 10,
+                color: Cesium.Color.YELLOW,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            },
+            label: {
+                text: `Nokta ${pointCounter - 1}`,
+                font: '16px sans-serif',
+                fillColor: Cesium.Color.BLACK,
+                outlineColor: Cesium.Color.WHITE,
+                outlineWidth: 2,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                pixelOffset: new Cesium.Cartesian2(0, -25),
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            }
+        });
+
+        if (points.length > 1) {
+            const start = points[points.length - 2];
+            const end = points[points.length - 1];
+            const startCartesian = Cesium.Cartesian3.fromRadians(start.longitude, start.latitude, start.height);
+            const endCartesian = Cesium.Cartesian3.fromRadians(end.longitude, end.latitude, end.height);
+
+            const distance = Cesium.Cartesian3.distance(startCartesian, endCartesian).toFixed(2);
+
+            const line = viewer.entities.add({
+                polyline: {
+                    positions: [startCartesian, endCartesian],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7),
+                    clampToGround: true
+                },
+                label: {
+                    text: `${distance} metre`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: Cesium.Cartesian3.midpoint(startCartesian, endCartesian, new Cesium.Cartesian3())
+            });
+
+            lines.push(line);
+        }
+    }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+    handler.setInputAction(() => {
+        if (points.length > 2 && !isPolygonClosed) {
+            isPolygonClosed = true;
+
+            const positions = points.map(p => Cesium.Cartesian3.fromRadians(p.longitude, p.latitude, p.height));
+            positions.push(positions[0]);
+
+            const finalDistance = Cesium.Cartesian3.distance(positions[positions.length - 2], positions[0]).toFixed(2);
+
+            viewer.entities.add({
+                polyline: {
+                    positions: [positions[positions.length - 2], positions[0]],
+                    width: 3,
+                    material: Cesium.Color.YELLOW.withAlpha(0.7),
+                    clampToGround: true
+                },
+                label: {
+                    text: `${finalDistance} metre`,
+                    font: '14px sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    showBackground: true,
+                    backgroundColor: Cesium.Color.BLACK.withAlpha(0.5),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                position: Cesium.Cartesian3.midpoint(positions[positions.length - 2], positions[0], new Cesium.Cartesian3())
+            });
+
+            const { triangles, centroid } = triangulateWithTin(points);
+
+            triangles.forEach(triangle => {
+                const coords = triangle.geometry.coordinates[0];
+                const hierarchy = coords.map(coord => Cesium.Cartesian3.fromDegrees(coord[0], coord[1]));
+
+                // Üçgeni çizdir
+                viewer.entities.add({
+                    polygon: {
+                        hierarchy: hierarchy,
+                        material: Cesium.Color.YELLOW.withAlpha(0.3),
+                        outline: true,
+                        outlineColor: Cesium.Color.RED,
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    }
+                });
+
+                // Kenar çizgilerini ekle
+                for (let i = 0; i < hierarchy.length - 1; i++) {
+                    const start = hierarchy[i];
+                    const end = hierarchy[i + 1];
+                    const isEdgeOnPolygon = i === hierarchy.length - 2;
+
+                    viewer.entities.add({
+                        polyline: {
+                            positions: [start, end],
+                            width: 2,
+                            material: isEdgeOnPolygon ? Cesium.Color.YELLOW : Cesium.Color.RED,
+                            clampToGround: true
+                        }
+                    });
+                }
+            });
+
+            isPolygonClosed = false;
+            points = [];
+            lines = [];
+        }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            document.body.style.cursor = 'default';
+
+            isPolygonClosed = false;
+            points = [];
+            lines = [];
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        }
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
+// Butonlar için durum tutmak adına bir nesne oluşturuyoruz
+const buttons = {
+    toggleFillCut: false,
+    toggleSlope: false,
+    toggleAspect: false,
+    toggleProfile: false,
+    toggleTriangulation: false
+};
+
+function resetAll() {
+    // Cesium'daki tüm entitileri kaldırır
+    viewer.entities.removeAll();
+
+    // Tüm butonların aktifliğini sıfırlar
+    Object.keys(buttons).forEach(buttonId => {
+        buttons[buttonId] = false;
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.classList.remove('active'); // Örneğin, 'active' sınıfını kaldırıyoruz.
+        }
+    });
+}
+
+// ESC tuşuna basıldığında tüm butonları ve ekrandaki entitileri sıfırlayan fonksiyon
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        resetAll();
+    }
+});
+
+// Her bir buton için tıklama olaylarını ekleriz
+document.getElementById('toggleFillCut').addEventListener('click', () => {
+    buttons.toggleFillCut = true;
+    document.getElementById('toggleFillCut').classList.add('active');
+    // Buraya Kazı/Dolgu analizi işlemlerini ekleyebilirsin.
+});
+
+document.getElementById('toggleSlope').addEventListener('click', () => {
+    buttons.toggleSlope = true;
+    document.getElementById('toggleSlope').classList.add('active');
+    // Buraya Eğim analizi işlemlerini ekleyebilirsin.
+});
+
+document.getElementById('toggleAspect').addEventListener('click', () => {
+    buttons.toggleAspect = true;
+    document.getElementById('toggleAspect').classList.add('active');
+    // Buraya Bakı analizi işlemlerini ekleyebilirsin.
+});
+
+document.getElementById('toggleProfile').addEventListener('click', () => {
+    buttons.toggleProfile = true;
+    document.getElementById('toggleProfile').classList.add('active');
+    // Buraya Enkesit/Boykesit aracı işlemlerini ekleyebilirsin.
+});
+
+document.getElementById('toggleTriangulation').addEventListener('click', () => {
+    buttons.toggleTriangulation = true;
+    document.getElementById('toggleTriangulation').classList.add('active');
+    // Buraya Üçgenleme analizi işlemlerini ekleyebilirsin.
+});
+
+
+
+  
+})();
+
+  </script>
+</body>
+</html>

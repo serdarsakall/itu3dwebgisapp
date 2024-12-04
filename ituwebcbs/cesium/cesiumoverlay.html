@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .button-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .button-container button {
+      margin: 5px 0;
+      background-color: #444;
+      color: white;
+      border: 1px solid #555;
+      padding: 10px;
+      cursor: pointer;
+      text-align: left;
+      border-radius: 5px;
+      width: 200px;
+    }
+    #overlaySubmenu {
+  display: flex;
+  flex-direction: column; /* This ensures the buttons are stacked vertically */
+  margin-top: 5px;
+}
+button {
+  margin-bottom: 5px; /* Adds some space between buttons */
+}
+    #coordinatesBar {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    #legend {
+      position: absolute;
+      bottom: 30px;
+      right: 5px;
+      z-index: 10;
+      background-color: rgba(42, 42, 42, 0.8);
+      padding: 5px;
+      border-radius: 5px;
+      display: none;
+    }
+    .legend-title {
+      color: white;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      margin: 2px 0;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
+      display: inline-block;
+    }
+    .legend-text {
+      color: white;
+    }
+    #titleBar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 16px;
+      font-family: sans-serif;
+    }
+    #coordinatesBar {
+    position: absolute;
+    bottom: 30px;
+    right: 10px;
+    z-index: 10;
+    background-color: rgba(42, 42, 42, 0.8);
+    color: white;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    display: flex; /* Flexbox ile yatay hizalama */
+    align-items: center; /* Dikey hizalamayı ortala */
+}
+
+#coordinateMode {
+    margin-right: 10px; /* Seçenek menüsü ile koordinat değeri arasındaki boşluk */
+}
+
+#coordinateValues {
+    margin: 0; /* Koordinat değeri için sıfır marj */
+}
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="titleBar">Ayazağa Kampüsü Çakışma Analizi</div>
+  <div class="button-container">
+    <button id="zoomToITU">Zoom to İTÜ Ayazağa Campus</button>
+    <button id="overlayAnalysis">Create Buffers</button>
+    <div id="overlaySubmenu" style="display: none;">
+      <button id="selectButton">Select Feature</button>
+      <button id="deleteButton">Delete Feature</button> <!-- Added Delete Feature button -->
+      <button id="clipButton">Clip Feature</button>
+    </div>
+    <button id="analyzeOverlay" style="display: none;">Analyze Overlays</button>
+  </div>  
+  <div id="coordinatesBar">
+    <select id="coordinateMode">
+        <option value="geographic">Geographic</option>
+        <option value="cartesian">Cartesian</option>
+    </select>
+    <div id="coordinateValues"></div>
+  </div>
+  <script type="module">
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmODA0MDMwNS03N2IyLTRkODctYTAzZi0wMmRkYTU1OGJjMTMiLCJpZCI6MjI1MzIxLCJpYXQiOjE3MjA0MjEwNTd9.AueVNcT4JB7BWK3WjVNk7bZ2Yau1WivqVIeniCP2Ntw";
+
+    (async () => {
+      try {
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+          terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(2656560),
+        });
+
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+
+        const imageryLayer = viewer.imageryLayers.addImageryProvider(
+          await Cesium.IonImageryProvider.fromAssetId(2656561),
+        );
+
+        const tilesets = [
+          2654260, 2654259, 2654257, 2654256, 2654255, 2654253, 2654252, 2654251,
+          2654250, 2654249, 2654248, 2654246, 2654243, 2654241, 2654239, 2658263,
+          2658261, 2658258, 2658247, 2658239, 2658220, 2658205, 2658186, 2658080,
+          2658066, 2658057, 2657980, 2657979, 2657947, 2657944, 2657943, 2657806,
+          2657804, 2657802, 2657801, 2657799, 2657795, 2657793, 2657789, 2657788,
+          2657787, 2654283, 2654282, 2654281, 2654280, 2654279, 2654277, 2654276,
+          2654275, 2654274, 2654273, 2654271, 2654270, 2654269, 2654268, 2654267,
+          2654266, 2654265, 2654264, 2654262, 2654261,
+        ];
+
+        const tilesetPrimitives = await Promise.all(tilesets.map(async (assetId) => {
+          const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+          viewer.scene.primitives.add(tileset);
+          return tileset;
+        }));
+
+        tilesetPrimitives.forEach(tileset => {
+          const extras = tileset.asset.extras;
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.defaultStyle)) {
+            tileset.style = new Cesium.Cesium3DTileStyle(extras.ion.defaultStyle);
+          }
+
+          if (Cesium.defined(extras) && Cesium.defined(extras.ion) && Cesium.defined(extras.ion.georeferencedBoundingBox)) {
+            const bbox = extras.ion.georeferencedBoundingBox;
+            const center = Cesium.BoundingSphere.fromCornerPoints(
+              Cesium.Cartesian3.fromDegrees(bbox.west, bbox.south),
+              Cesium.Cartesian3.fromDegrees(bbox.east, bbox.north)
+            ).center;
+            tileset.readyPromise.then(() => {
+              viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0, -0.5, center.z * 2.0));
+            });
+          }
+        });
+
+        // Zoom to ITU function
+        document.getElementById('zoomToITU').addEventListener('click', () => {
+          const ituBoundingSphere = new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(29.0224, 41.1055), 1000);
+          viewer.camera.flyToBoundingSphere(ituBoundingSphere);
+        });
+
+        function updateGeographicCoordinates(cartographic) {
+    const lonDegrees = Cesium.Math.toDegrees(cartographic.longitude);
+    const latDegrees = Cesium.Math.toDegrees(cartographic.latitude);
+    
+    const lon = Math.abs(lonDegrees).toFixed(6);
+    const lat = Math.abs(latDegrees).toFixed(6);
+    
+    const lonDirection = lonDegrees >= 0 ? 'E' : 'W';
+    const latDirection = latDegrees >= 0 ? 'N' : 'S';
+    
+    const height = viewer.scene.globe.getHeight(cartographic).toFixed(2);
+
+    return `Lon: ${lon}° ${lonDirection}, Lat: ${lat}° ${latDirection}, Height: ${height}m`;
+}
+
+// Coordinate bar update function for Cartesian mode
+function updateCartesianCoordinates(cartographic) {
+    const cartesian = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, cartographic.height);
+    const x = cartesian.x.toFixed(4);
+    const y = cartesian.y.toFixed(4);
+    const z = cartesian.z.toFixed(4);
+    return `X: ${x} m, Y: ${y} m, Z: ${z} m`;
+}
+
+// Main function to update coordinates bar based on selected mode
+function updateCoordinatesBar(cartographic, mode) {
+    let coordinatesText;
+    if (mode === 'geographic') {
+        coordinatesText = updateGeographicCoordinates(cartographic);
+    } else if (mode === 'cartesian') {
+        coordinatesText = updateCartesianCoordinates(cartographic);
+    }
+    document.getElementById('coordinateValues').innerText = coordinatesText;
+}
+
+// Mouse move event listener for coordinates bar
+const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction((movement) => {
+    const cartesian = viewer.camera.pickEllipsoid(movement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        const mode = document.getElementById('coordinateMode').value;
+        updateCoordinatesBar(cartographic, mode);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+    }
+}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+// Dropdown change event listener to update coordinates based on selected mode
+document.getElementById('coordinateMode').addEventListener('change', (event) => {
+    const cartesian = viewer.camera.pickEllipsoid(handler._lastMovement.endPosition, viewer.scene.globe.ellipsoid);
+    if (cartesian) {
+        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+        updateCoordinatesBar(cartographic, event.target.value);
+    } else {
+        document.getElementById('coordinateValues').innerText = "Please be sure about that you're in anywhere at the Earth.";
+    }
+});
+
+let bufferCount = 0;
+let bufferEntities = [];
+let selectedEntity = null;
+let pickedPosition = null; // Store the picked position
+let currentLegend = null; // Store current visible legend
+let resetStage = 0; // 0: no action, 1: buffer creation reset, 2: all buffers reset
+let bufferCreationActive = false; // Track buffer creation state
+
+// Camera lock and unlock functions
+function lockCamera() {
+  viewer.scene.screenSpaceCameraController.enableRotate = false;
+  viewer.scene.screenSpaceCameraController.enableTranslate = false;
+  viewer.scene.screenSpaceCameraController.enableZoom = false;
+  viewer.scene.screenSpaceCameraController.enableTilt = false;
+  viewer.scene.screenSpaceCameraController.enableLook = false;
+}
+
+function unlockCamera() {
+  viewer.scene.screenSpaceCameraController.enableRotate = true;
+  viewer.scene.screenSpaceCameraController.enableTranslate = true;
+  viewer.scene.screenSpaceCameraController.enableZoom = true;
+  viewer.scene.screenSpaceCameraController.enableTilt = true;
+  viewer.scene.screenSpaceCameraController.enableLook = true;
+}
+
+// Get buttons and submenu elements
+const overlayButton = document.getElementById('overlayAnalysis');
+const selectButton = document.getElementById('selectButton');
+const clipButton = document.getElementById('clipButton');
+const deleteButton = document.getElementById('deleteButton');
+const analyzeOverlayButton = document.getElementById('analyzeOverlay');
+
+// Function to update button visibility
+function updateButtonVisibility() {
+  if (bufferEntities.length >= 1) {
+    selectButton.style.display = 'block';
+    deleteButton.style.display = 'block';
+    clipButton.style.display = 'block';
+  } else {
+    selectButton.style.display = 'none';
+    deleteButton.style.display = 'none';
+    clipButton.style.display = 'none';
+  }
+
+  if (bufferEntities.length >= 2) {
+    analyzeOverlayButton.style.display = 'block';
+  } else {
+    analyzeOverlayButton.style.display = 'none';
+  }
+}
+
+// Disable right-click context menu
+document.addEventListener('contextmenu', function (event) {
+  event.preventDefault(); // Prevent the default right-click menu
+});
+
+// Function to create buffer with customized distances and cumulative increase
+function generateCumulativeBufferDistances(baseLength, count, percentage, startFromCenter) {
+  const distances = [baseLength]; // İlk halka her zaman baseLength
+  for (let i = 1; i < count; i++) {
+    const previous = distances[i - 1];
+
+    if (startFromCenter) {
+      // Start from center: Her yeni halka, önceki yarıçap üzerine eklenir.
+      const newLength = previous + (baseLength * (percentage / 100));
+      distances.push(newLength);
+    } else {
+      // Start from piece: Bir önceki halkanın bitişinden itibaren artar.
+      const newLength = previous + baseLength + (baseLength * (percentage / 100));
+      distances.push(newLength);
+    }
+  }
+  return distances;
+}
+
+function createBufferWithLength(position, length, count, increasePercentage, startFromCenter) {
+  const distances = generateCumulativeBufferDistances(length, count, increasePercentage, startFromCenter); 
+  bufferCount++;
+  const centerPointName = `Center Point of Buffer ${bufferCount}`;
+  createBuffer(position, centerPointName, distances);
+
+  // Buffer oluşturulduğunda buton görünürlüğünü güncelle
+  updateButtonVisibility();
+  bufferCreationActive = true; // Buffer oluşturulma durumunu aktif yap
+}
+
+// Function to create buffer length menu with new dropdown for start option
+function createBufferLengthMenu(clickPosition) {
+  if (document.getElementById('bufferLengthMenu')) return;
+  lockCamera(); // Menü açıkken kamerayı kilitle
+
+  const div = document.createElement('div');
+  div.id = 'bufferLengthMenu';
+  div.style.position = 'absolute';
+  div.style.left = `${clickPosition.x}px`;
+  div.style.top = `${clickPosition.y}px`;
+  div.style.background = 'rgba(42, 42, 42, 0.8)';
+  div.style.border = '1px solid black';
+  div.style.padding = '5px';
+  div.style.color = 'white';
+
+  div.innerHTML = `
+    <label>Buffer Piece Length:</label>
+    <input type="number" id="bufferLengthInput" step="0.01" value="300"> meters<br>
+    <label>Number of Multi-Buffers:</label>
+    <input type="number" id="bufferCountInput" min="1" value="3"><br>
+    <label>Increase Buffer Range (Cumulatively):</label>
+    <input type="number" id="increasePercentageInput" step="0.01" value="0"> %<br>
+    <label>Buffer Start Point:</label>
+    <select id="startFromOption">
+      <option value="center">Start from Center</option>
+      <option value="piece">Start from Piece</option>
+    </select><br>
+    <button id="submitBufferLength" style="display: block; margin: 5px auto;">Create Buffer</button>
+  `;
+
+  document.body.appendChild(div);
+
+  // Menüyü gönderme işlemi için event listener ekle
+  document.getElementById('submitBufferLength').addEventListener('click', () => {
+    submitBufferMenu();
+  });
+
+  // Enter veya Escape tuşlarına basıldığında işlemleri kontrol et
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+      submitBufferMenu();
+    } else if (event.key === 'Escape') {
+      document.body.removeChild(div); // ESC'ye basıldığında menüyü kapat
+      unlockCamera();
+      resetAnalysis();
+    }
+  });
+}
+
+// Function to handle buffer menu submission
+function submitBufferMenu() {
+  const bufferLength = parseFloat(document.getElementById('bufferLengthInput').value);
+  const bufferCount = parseInt(document.getElementById('bufferCountInput').value);
+  const increasePercentage = parseFloat(document.getElementById('increasePercentageInput').value);
+  const startFromOption = document.getElementById('startFromOption').value;
+  const startFromCenter = startFromOption === 'center'; // Start from center seçeneği kontrolü
+
+  if (!isNaN(bufferLength) && !isNaN(bufferCount) && bufferCount > 0) {
+    createBufferWithLength(pickedPosition, bufferLength, bufferCount, increasePercentage, startFromCenter);
+  }
+
+  document.body.removeChild(document.getElementById('bufferLengthMenu')); // Menüyü kapat
+  unlockCamera(); // Kamera kilidini aç
+}
+
+// Function to create buffers around a point
+function createBuffers(position, distances) {
+  const colors = generateBufferColors(distances.length);
+  return distances.map((distance, index) => {
+    return viewer.entities.add({
+      position: position,
+      ellipse: {
+        semiMinorAxis: distance,
+        semiMajorAxis: distance,
+        material: colors[index],
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        classificationType: Cesium.ClassificationType.TERRAIN,
+      },
+      show: true,
+    });
+  });
+}
+
+// Create center point with label
+function createCenterPoint(position, name) {
+  return viewer.entities.add({
+    position: position,
+    point: {
+      pixelSize: 10,
+      color: Cesium.Color.BLACK,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+    },
+    label: {
+      text: name,
+      font: '16px sans-serif',
+      fillColor: Cesium.Color.WHITE,
+      style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+      verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+      pixelOffset: new Cesium.Cartesian2(0, -20),
+    },
+  });
+}
+
+// Function to create a buffer around a point
+function createBuffer(position, name, distances) {
+  const centerPoint = createCenterPoint(position, name); // Label the center point
+  const bufferRings = createBuffers(position, distances); // Create the buffer rings
+  bufferEntities.push({ center: centerPoint, rings: bufferRings });
+
+  createLegend(name, distances); // Create the legend for the buffer
+  return bufferRings;
+}
+
+// Event listener for buffer analysis (right-click to show buffer length menu)
+document.getElementById('overlayAnalysis').addEventListener('click', () => {
+  let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+  viewer.scene.canvas.style.cursor = 'crosshair';
+
+  // Right-click to open buffer length menu
+  handler.setInputAction(function (click) {
+    pickedPosition = viewer.scene.pickPosition(click.position); // Store the picked 3D position
+    const screenPosition = click.position; // For positioning the menu
+
+    if (Cesium.defined(pickedPosition)) {
+      createBufferLengthMenu(screenPosition); // Show menu at clicked position
+    }
+  }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+
+  // Left-click to reset cursor and exit buffer creation process
+  handler.setInputAction(function () {
+    viewer.scene.canvas.style.cursor = 'default'; // Reset the cursor back to default
+  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+});
+
+// Function to reset the buffer creation process when ESC is pressed
+function resetAnalysis() {
+  // Remove all buffers from the screen
+  bufferEntities.forEach((bufferSet) => {
+    viewer.entities.remove(bufferSet.center);
+    bufferSet.rings.forEach((ring) => viewer.entities.remove(ring));
+  });
+  bufferEntities = []; // Clear buffer entities array
+  bufferCount = 0; // Reset buffer count
+
+  updateButtonVisibility(); // Update button visibility when resetting
+}
+
+
+      } catch (error) {
+        console.error("An error occurred: ", error);
+      }
+    })();
+  </script>
+</body>
+</html>
